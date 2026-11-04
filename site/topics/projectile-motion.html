@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projectile range, maximum height and flight time — UniStep</title>
+    <meta name="description" content="Resolve the launch velocity into components, then use constant-acceleration kinematics to find range, height or time of flight.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="../index.html" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="../index.html#how">How it works</a>
+            <a href="../index.html#pricing">Pricing</a>
+            <a href="index.html">Topics</a>
+            <a href="../verification.html">Verification</a>
+        </nav>
+        <a class="btn small primary" href="../index.html#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main class="legal">
+    <div class="wrap narrow">
+        <p class="eyebrow">Worked examples</p>
+        <h1>Projectile motion</h1>
+        <p class="lede">Projectile motion separates into independent horizontal and vertical parts. Horizontally the velocity is constant; vertically gravity acts alone, which sets the flight time and the peak height.</p>
+
+        <article class="example">
+            <p class="example-problem">A projectile is launched at 20 m/s at 30 degrees. Find the range.</p>
+            <p class="example-answer"><span>Answer</span> 35.3119 m</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Resolve the Initial Velocity</strong>
+                    <span>Split the launch speed into horizontal and vertical components.</span>
+                    <code>vx = 17.321 m/s,  vy = 10 m/s</code>
+                </li>
+                <li>
+                    <strong>Identify the Principle</strong>
+                    <span>We need the horizontal range, which follows from the vertical motion under constant acceleration g = 9.81 m/s².</span>
+                    <code>R = v² sin(2θ) / g</code>
+                </li>
+                <li>
+                    <strong>Substitute</strong>
+                    <span>Launch speed 20 m/s at 30° above the horizontal.</span>
+                    <code>v = 20 m/s,  θ = 30°,  g = 9.81 m/s²</code>
+                </li>
+                <li>
+                    <strong>Final Answer</strong>
+                    <span>Air resistance is neglected, so this is the ideal trajectory.</span>
+                    <code>horizontal range = 35.3119 m</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: No air resistance; Flat ground; Constant gravitational acceleration; Launch and landing at the same height</p>
+        </article>
+        <article class="example">
+            <p class="example-problem">A projectile is launched at 25 m/s at 45 degrees. Find the maximum height.</p>
+            <p class="example-answer"><span>Answer</span> 15.9276 m</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Resolve the Initial Velocity</strong>
+                    <span>Split the launch speed into horizontal and vertical components.</span>
+                    <code>vx = 17.678 m/s,  vy = 17.678 m/s</code>
+                </li>
+                <li>
+                    <strong>Identify the Principle</strong>
+                    <span>We need the maximum height, which follows from the vertical motion under constant acceleration g = 9.81 m/s².</span>
+                    <code>H = v² sin²θ / (2g)</code>
+                </li>
+                <li>
+                    <strong>Substitute</strong>
+                    <span>Launch speed 25 m/s at 45° above the horizontal.</span>
+                    <code>v = 25 m/s,  θ = 45°,  g = 9.81 m/s²</code>
+                </li>
+                <li>
+                    <strong>Final Answer</strong>
+                    <span>Air resistance is neglected, so this is the ideal trajectory.</span>
+                    <code>maximum height = 15.9276 m</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: No air resistance; Flat ground; Constant gravitational acceleration; Launch and landing at the same height</p>
+        </article>
+
+        <div class="topic-cta">
+            <p>Every answer above was produced by the same engine that runs in the app — not written by hand for this page.</p>
+            <a class="btn primary" href="../demo/index.html">Try your own problem</a>
+            <a class="btn ghost" href="../verification.html">See the test suite</a>
+        </div>
+
+        <nav class="topic-related" aria-label="Related topics"><span>Related</span><a href="rolling-energy-ratio.html">Rolling energy ratios</a></nav>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="../index.html" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="../privacy.html">Privacy</a>
+            <a href="../terms.html">Terms</a>
+            <a href="../verification.html">Verification</a>
+            <a href="../security.html">Security</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
