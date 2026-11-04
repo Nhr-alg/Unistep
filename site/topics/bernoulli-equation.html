@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bernoulli's equation: pressure change along a streamline — UniStep</title>
+    <meta name="description" content="Use the horizontal form of Bernoulli’s equation to find the pressure change when a fluid accelerates or slows.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="../index.html" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="../index.html#how">How it works</a>
+            <a href="../index.html#pricing">Pricing</a>
+            <a href="index.html">Topics</a>
+            <a href="../verification.html">Verification</a>
+        </nav>
+        <a class="btn small primary" href="../index.html#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main class="legal">
+    <div class="wrap narrow">
+        <p class="eyebrow">Worked examples</p>
+        <h1>Bernoulli's equation</h1>
+        <p class="lede">Along a streamline, pressure, kinetic energy per unit volume and gravitational potential energy per unit volume trade off against each other. Where the fluid speeds up, the pressure must fall.</p>
+
+        <article class="example">
+            <p class="example-problem">Using Bernoulli, water flows at v1 = 1 m/s and v2 = 3 m/s. Find the pressure drop.</p>
+            <p class="example-answer"><span>Answer</span> 4 kPa</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Write Bernoulli's Equation</strong>
+                    <span>For a horizontal streamline the elevation terms cancel, leaving pressure and kinetic energy to balance.</span>
+                    <code>P₁ + ½ρv₁² = P₂ + ½ρv₂²</code>
+                </li>
+                <li>
+                    <strong>Rearrange for Pressure Change</strong>
+                    <span>Group the velocity terms to isolate the pressure difference.</span>
+                    <code>ΔP = ½ρ(v₁² − v₂²)</code>
+                </li>
+                <li>
+                    <strong>Substitute</strong>
+                    <span>Density is taken as 1000 kg/m³ for water.</span>
+                    <code>ΔP = ½(1000)(1² − 3²)</code>
+                </li>
+                <li>
+                    <strong>Final Answer</strong>
+                    <span>The pressure rises as the fluid slows, converting kinetic energy back into pressure.</span>
+                    <code>ΔP = 4 kPa</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: Steady, incompressible, inviscid flow; Horizontal streamline; No losses between the two points</p>
+        </article>
+        <article class="example">
+            <p class="example-problem">Using Bernoulli, water flows at v1 = 4 m/s and v2 = 1 m/s. Find the pressure change.</p>
+            <p class="example-answer"><span>Answer</span> 7.5 kPa</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Write Bernoulli's Equation</strong>
+                    <span>For a horizontal streamline the elevation terms cancel, leaving pressure and kinetic energy to balance.</span>
+                    <code>P₁ + ½ρv₁² = P₂ + ½ρv₂²</code>
+                </li>
+                <li>
+                    <strong>Rearrange for Pressure Change</strong>
+                    <span>Group the velocity terms to isolate the pressure difference.</span>
+                    <code>ΔP = ½ρ(v₁² − v₂²)</code>
+                </li>
+                <li>
+                    <strong>Substitute</strong>
+                    <span>Density is taken as 1000 kg/m³ for water.</span>
+                    <code>ΔP = ½(1000)(4² − 1²)</code>
+                </li>
+                <li>
+                    <strong>Final Answer</strong>
+                    <span>The pressure falls as the fluid accelerates, which is the basis of a Venturi meter.</span>
+                    <code>ΔP = 7.5 kPa</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: Steady, incompressible, inviscid flow; Horizontal streamline; No losses between the two points</p>
+        </article>
+
+        <div class="topic-cta">
+            <p>Every answer above was produced by the same engine that runs in the app — not written by hand for this page.</p>
+            <a class="btn primary" href="../demo/index.html">Try your own problem</a>
+            <a class="btn ghost" href="../verification.html">See the test suite</a>
+        </div>
+
+        <nav class="topic-related" aria-label="Related topics"><span>Related</span><a href="reynolds-number.html">Reynolds number</a></nav>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="../index.html" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="../privacy.html">Privacy</a>
+            <a href="../terms.html">Terms</a>
+            <a href="../verification.html">Verification</a>
+            <a href="../security.html">Security</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
