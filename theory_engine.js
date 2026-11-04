@@ -249,6 +249,61 @@
             conditions: 'The concentration approximation is most appropriate for dilute solutions; rigorous pH is defined through hydrogen-ion activity.',
             example: 'If [H⁺] = 1×10⁻⁵ mol/L, pH ≈ 5.',
             check: 'A lower pH means higher acidity in the usual aqueous context.'
+        },
+        {
+            id: 'rocket-equation', subject: 'Aerospace Engineering', title: 'Tsiolkovsky rocket equation',
+            aliases: ['rocket equation', 'tsiolkovsky', 'delta-v', 'delta v', 'rocket propulsion', 'mass ratio', 'specific impulse'],
+            summary: 'The rocket equation relates the velocity change a rocket can achieve to its exhaust velocity and the ratio of initial to final mass.',
+            intuition: 'To go faster, you either need a more efficient engine (higher exhaust velocity) or you need to carry more propellant relative to your dry mass. The relationship is logarithmic, so doubling delta-v requires exponentially more propellant.',
+            equations: ['\u0394v = v_e \u00D7 ln(m_0 / m_f)', '\u0394v = I_sp \u00D7 g_0 \u00D7 ln(m_0 / m_f)'],
+            units: ['\u0394v: m/s', 'v_e: m/s', 'I_sp: seconds', 'g_0: 9.81 m/sA�', 'm_0, m_f: kg'],
+            conditions: 'Assumes impulsive burn, no gravity or drag losses, constant exhaust velocity, and vacuum conditions.',
+            example: 'A rocket with m_0 = 500,000 kg, m_f = 100,000 kg, and I_sp = 300 s achieves \u0394v = 300 \u00D7 9.81 \u00D7 ln(5) \u2248 4,720 m/s.',
+            check: 'The mass ratio m_0/m_f must be greater than 1. Delta-v grows logarithmically, so diminishing returns set in quickly.'
+        },
+        {
+            id: 'orbital-mechanics', subject: 'Aerospace Engineering', title: 'Circular orbital mechanics',
+            aliases: ['orbital velocity', 'orbital period', 'satellite orbit', 'circular orbit', 'kepler', 'hohmann'],
+            summary: 'A satellite in circular orbit balances gravity pulling inward with the centrifugal effect of its tangential velocity.',
+            intuition: 'Higher orbits move more slowly but take longer to complete. To raise your orbit, you actually add energy, which paradoxically slows your speed.',
+            equations: ['v = \u221A(GM / r)', 'T = 2\u03C0 \u00D7 \u221A(r\u00B3 / GM)', 'v_e = \u221A(2GM / r)'],
+            units: ['v: m/s', 'T: seconds', 'r: metres', 'GM: mA3/sA2'],
+            conditions: 'Assumes a spherical central body, no atmospheric drag, and a two-body problem.',
+            example: 'At 400 km altitude, orbital velocity is about 7,670 m/s and period is about 92 minutes.',
+            check: 'Escape velocity is \u221A2 (\u2248 1.414) times circular orbital velocity at the same radius.'
+        },
+        {
+            id: 'lift-drag', subject: 'Aerospace Engineering', title: 'Lift and drag forces',
+            aliases: ['lift', 'drag', 'lift coefficient', 'drag coefficient', 'aerodynamics', 'wing lift', 'airfoil'],
+            summary: 'Lift and drag both scale with dynamic pressure (\u00BD\u03C1v\u00B2), reference area, and their respective dimensionless coefficients.',
+            intuition: 'Lift acts perpendicular to the flow and holds the aircraft up; drag acts parallel and opposes motion. Streamlining reduces drag coefficient dramatically.',
+            equations: ['L = \u00BD \u03C1 v\u00B2 S C_L', 'D = \u00BD \u03C1 v\u00B2 S C_D'],
+            units: ['L, D: newtons (N)', '\u03C1: kg/mA3', 'v: m/s', 'S: mA2', 'C_L, C_D: dimensionless'],
+            conditions: 'Assumes incompressible flow and constant coefficients. Compressibility becomes important above Mach ~0.3.',
+            example: 'An aircraft with S = 20 mA2, v = 70 m/s, C_L = 0.5, and \u03C1 = 1.225 kg/mA3 generates L \u2248 30,000 N of lift.',
+            check: 'Lift and drag both scale with velocity squared \u2014 doubling speed quadruples both forces.'
+        },
+        {
+            id: 'mach-number', subject: 'Aerospace Engineering', title: 'Mach number and compressible flow',
+            aliases: ['mach', 'mach number', 'compressible flow', 'speed of sound', 'supersonic', 'subsonic', 'transonic'],
+            summary: 'Mach number is the ratio of object speed to the local speed of sound. It governs compressibility effects and shock wave formation.',
+            intuition: 'Below Mach 1, air has time to move out of the way. Near and above Mach 1, pressure disturbances pile up into shock waves, dramatically changing drag and heating.',
+            equations: ['M = v / a', 'a = \u221A(\u03B3 \u00D7 R \u00D7 T)'],
+            units: ['M: dimensionless', 'v: m/s', 'a: m/s', 'T: kelvin'],
+            conditions: 'Speed of sound depends on local temperature: a = \u221A(1.4 \u00D7 287 \u00D7 T) for air.',
+            example: 'At sea level (15\u00B0C), a \u2248 343 m/s. An aircraft at 250 m/s is flying at Mach 0.73 \u2014 transonic.',
+            check: 'Regimes: M < 1 subsonic, M \u2248 1 transonic, 1 < M < 5 supersonic, M > 5 hypersonic.'
+        },
+        {
+            id: 'standard-atmosphere', subject: 'Aerospace Engineering', title: 'Standard atmosphere model',
+            aliases: ['standard atmosphere', 'atmospheric model', 'density altitude', 'pressure altitude', 'isa'],
+            summary: 'The International Standard Atmosphere models how temperature, pressure, and density change with altitude under average conditions.',
+            intuition: 'As you climb, air gets thinner and colder. This reduces engine thrust, lift, and the speed of sound \u2014 critical for aircraft and rocket performance.',
+            equations: ['T = 288.15 \u2212 0.0065 \u00D7 h (troposphere, h \u2264 11 km)', 'P = 101325 \u00D7 (T / 288.15)^5.25588', '\u03C1 = P / (287 \u00D7 T)'],
+            units: ['T: kelvin', 'P: pascals', '\u03C1: kg/mA3', 'h: metres'],
+            conditions: 'Valid for 0\u201320 km in this simplified model. Real atmosphere varies with weather, season, and location.',
+            example: 'At 10 km altitude: T \u2248 223 K, P \u2248 26.5 kPa, \u03C1 \u2248 0.413 kg/mA3 \u2014 about one third of sea-level density.',
+            check: 'Density drops roughly exponentially with altitude, which is why aircraft cruise high: less drag, better fuel efficiency.'
         }
     ];
 
