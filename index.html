@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' file: 'wasm-unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net blob:; style-src 'self' file:; font-src 'self'; img-src 'self' file: data: blob:; connect-src 'self' blob: data: https://unpkg.com https://cdn.jsdelivr.net https://*.supabase.co; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="referrer" content="no-referrer">
+    <meta name="description" content="UniStep — verified, step-by-step engineering solutions with unit checks. Runs locally in your browser.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta name="color-scheme" content="light">
+    <title>UniStep — Verified Engineering Solver</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Supabase client (optional cloud sync). Configure via window.SupabaseConfig below. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // --- Supabase configuration (REQUIRED for cloud sync) ---
+        // Replace the placeholder values with your Supabase project credentials.
+        // Get them at: supabase.com → Project Settings → API
+        window.SupabaseConfig = {
+            url: 'REPLACE_WITH_YOUR_SUPABASE_URL',
+            anonKey: 'REPLACE_WITH_YOUR_SUPABASE_ANON_KEY'
+        };
+    </script>
+</head>
+<body>
+
+<div class="launch-splash" id="launch-splash" hidden aria-hidden="true">
+    <div class="launch-splash-content" role="dialog" aria-modal="true" aria-labelledby="launch-title">
+        <p class="launch-brand" id="launch-title">Uni<span>Step</span></p>
+        <p class="launch-caption">One step at a time.</p>
+        <svg class="launch-scene" viewBox="0 0 390 210" role="img" aria-labelledby="launch-scene-title">
+            <title id="launch-scene-title">A student walks up a staircase</title>
+            <path class="launch-stairs" d="M24 184h52v-18h52v-18h52v-18h52v-18h52V94h52" />
+            <path class="launch-stair-accent" d="M76 166h52m0-18h52m0-18h52m0-18h52m0-18h52" />
+            <g class="launch-walker">
+                <g class="launch-student" transform="translate(24 184)">
+                    <path class="student-leg student-leg-back" d="M-7-43h8l-4 19-11 16h-8l6-19z" />
+                    <path class="student-shoe student-shoe-back" d="M-22-9q7-3 11 1l-2 5h-12q-2-3 3-6z" />
+                    <path class="student-backpack" d="M-7-69q-12 2-13 14l-1 12 10 3 7-12" />
+                    <path class="student-arm student-arm-back" d="M-7-65q-9 5-7 14l5 7" />
+                    <path class="student-jacket" d="M-6-72q6-4 12 0l8 22q2 5-4 8H-9q-5-3-3-8z" />
+                    <path class="student-jacket-seam" d="M1-68v23m-9-13 9 4 8-4" />
+                    <path class="student-neck" d="M-3-75v5m7-5v5" />
+                    <circle class="student-head" cx="0" cy="-83" r="9" />
+                    <path class="student-hair" d="M-9-83q1-11 10-10 9 1 9 9l-4-3q-5 2-10-1z" />
+                    <path class="student-arm student-arm-front" d="M7-66q9 4 9 12l8 5" />
+                    <circle class="student-hand" cx="24" cy="-49" r="3.3" />
+                    <path class="student-leg student-leg-front" d="M0-43h8l6 18 10 16-7 5-14-16-7-17z" />
+                    <path class="student-shoe student-shoe-front" d="M17-8q6-4 10 1l-1 4H15q-2-3 2-5z" />
+                </g>
+            </g>
+        </svg>
+        <button type="button" class="launch-skip" id="launch-skip">Skip animation</button>
+    </div>
+</div>
+
+<div class="app-shell" id="app-shell">
+
+    <!-- ------------------------------------------------------------ sidebar -->
+    <aside class="sidebar" id="sidebar" aria-label="Study archive">
+        <div class="sidebar-head">
+            <a class="brand" href="./" aria-label="UniStep home">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true">
+                        <path d="M4 19h5v-5h5V9h6"></path>
+                    </svg>
+                </span>
+                <span class="brand-name">Uni<span>Step</span></span>
+            </a>
+            <button type="button" class="icon-btn sidebar-close" id="sidebar-close" aria-label="Close archive">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6L6 18"></path>
+                </svg>
+            </button>
+        </div>
+
+        <button type="button" class="new-problem" id="new-problem">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            New problem
+        </button>
+
+        <nav class="studio-nav" aria-label="Study tools">
+            <button type="button" class="studio-btn" id="open-worksheet">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M7 3h7l4 4v14H7z"></path>
+                    <path d="M14 3v4h4M10 12h6M10 16h6"></path>
+                </svg>
+                <span>Worksheet studio</span>
+            </button>
+            <button type="button" class="studio-btn" id="open-practice">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="13" r="8"></circle>
+                    <path d="M12 9v4l3 2M9 2h6"></path>
+                </svg>
+                <span>Timed practice</span>
+            </button>
+            <button type="button" class="studio-btn" id="open-graph">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 4v16h16"></path>
+                    <path d="M6 17c3-1 4-9 7-9s4 6 6 6"></path>
+                </svg>
+                <span>Graph a function</span>
+            </button>
+        </nav>
+
+        <div class="archive">
+            <section class="archive-section">
+                <div class="archive-head">
+                    <h2><span class="dot dot-important" aria-hidden="true"></span>Important</h2>
+                    <button type="button" data-clear="important">Clear</button>
+                </div>
+                <div class="archive-list" id="history-important"></div>
+            </section>
+
+            <section class="archive-section">
+                <div class="archive-head">
+                    <h2><span class="dot dot-revision" aria-hidden="true"></span>Revision</h2>
+                    <button type="button" data-clear="revision">Clear</button>
+                </div>
+                <div class="archive-list" id="history-revision"></div>
+            </section>
+
+            <section class="archive-section">
+                <div class="archive-head">
+                    <h2><span class="dot dot-sessions" aria-hidden="true"></span>All problems</h2>
+                    <button type="button" data-clear="all">Clear</button>
+                </div>
+                <div class="archive-list" id="history-all"></div>
+            </section>
+
+            <button type="button" class="reset-archive" id="reset-archive">Reset archive</button>
+        </div>
+
+        <div class="sidebar-foot">
+            <div class="account">
+                <span class="avatar" id="account-avatar" aria-hidden="true">G</span>
+                <div class="account-meta">
+                    <p class="account-name" id="account-name">Guest session</p>
+                    <p class="account-hint" id="account-hint">Archive saved in this browser</p>
+                </div>
+            </div>
+            <button type="button" class="account-btn" id="auth-btn" title="Sign in or create a local profile">Sign in</button>
+            <nav class="legal-links" aria-label="Legal">
+                <button type="button" data-legal="privacy">Privacy</button>
+                <button type="button" data-legal="tos">Terms</button>
+                <button type="button" data-legal="cookies">Cookies</button>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- --------------------------------------------------------------- main -->
+    <div class="main">
+        <header class="topbar">
+            <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="Open archive" aria-controls="sidebar" aria-expanded="false">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"></path>
+                </svg>
+            </button>
+            <div class="topbar-title">
+                <span class="pulse" aria-hidden="true"></span>
+                Problem workspace
+            </div>
+            <span class="status" id="status-badge">Engine ready</span>
+        </header>
+
+        <main class="workspace" id="chat-container" role="log" aria-label="Conversation">
+            <section class="empty-state" id="empty-state">
+                <div class="empty-head">
+                    <div class="empty-copy">
+                        <p class="eyebrow">Verified engineering solver</p>
+                        <h1>What are you <em>working on?</em></h1>
+                        <p class="lede">Solve a supported engineering problem with checked steps, or ask Theory for a clear explanation of a core concept.</p>
+                    </div>
+
+                    <aside class="margin-note" aria-label="How UniStep solves a problem">
+                        <span class="margin-note-label">Method</span>
+                        <ol>
+                            <li>State the governing principle.</li>
+                            <li>Show every substitution.</li>
+                            <li>Check the units at the end.</li>
+                        </ol>
+                    </aside>
+                </div>
+
+                <div class="example-bar">
+                    <span>Start from a specimen</span>
+                    <span>04 problems</span>
+                </div>
+
+                <div class="example-grid">
+                    <button type="button" class="example-card" data-fill="A solid sphere rolls without slipping. Find the ratio of rotational KE to total KE.">
+                        <span class="example-no" aria-hidden="true">01</span>
+                        <span class="example-tag">Mechanics</span>
+                        <span class="example-title">Rolling sphere energy ratio</span>
+                        <span class="example-arrow" aria-hidden="true">→</span>
+                    </button>
+                    <button type="button" class="example-card" data-fill="Calculate the pH of a solution with hydrogen concentration 1e-5">
+                        <span class="example-no" aria-hidden="true">02</span>
+                        <span class="example-tag">Chemistry</span>
+                        <span class="example-title">pH from hydrogen concentration</span>
+                        <span class="example-arrow" aria-hidden="true">→</span>
+                    </button>
+                    <button type="button" class="example-card" data-fill="Find the moles of a substance with mass 10g and molar mass 20g/mol.">
+                        <span class="example-no" aria-hidden="true">03</span>
+                        <span class="example-tag">Stoichiometry</span>
+                        <span class="example-title">Moles from mass and molar mass</span>
+                        <span class="example-arrow" aria-hidden="true">→</span>
+                    </button>
+                    <button type="button" class="example-card" data-fill="Find the roots of x^2 + 5x + 6 = 0">
+                        <span class="example-no" aria-hidden="true">04</span>
+                        <span class="example-tag">Algebra</span>
+                        <span class="example-title">Quadratic equation roots</span>
+                        <span class="example-arrow" aria-hidden="true">→</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="composer-wrap">
+
+            <div class="composer-mode" role="group" aria-label="Choose answer mode">
+                <button type="button" class="mode-tab active" data-mode="solve" aria-pressed="true">Solve</button>
+                <button type="button" class="mode-tab" data-mode="theory" aria-pressed="false">Theory</button>
+                <span class="mode-description" id="mode-description">Get a checked numerical or symbolic solution.</span>
+            </div>
+            <div class="theory-prompts hidden" id="theory-prompts" aria-label="Example theory questions">
+                <span>Try:</span>
+                <button type="button" data-theory-fill="Explain Bernoulli's equation">Bernoulli’s equation</button>
+                <button type="button" data-theory-fill="What is the difference between stress and strain?">Stress and strain</button>
+                <button type="button" data-theory-fill="Explain Kirchhoff's laws">Kirchhoff’s laws</button>
+            </div>
+
+            <div class="composer">
+                <textarea id="user-input" rows="1" placeholder="Describe your problem…" aria-label="Problem input" autocomplete="off" spellcheck="true"></textarea>
+
+                <button type="button" id="send-btn" class="solve-btn">
+                    <span class="solve-label">Solve</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M5 12h13M13 6l6 6-6 6"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <p class="composer-hint">
+                <span id="enter-hint"><kbd>Enter</kbd> to solve</span>
+                <span class="hint-optional"><kbd>Shift</kbd> + <kbd>Enter</kbd> for a new line</span>
+
+            </p>
+        </footer>
+    </div>
+</div>
+
+<div class="scrim" id="sidebar-scrim" aria-hidden="true"></div>
+
+<!-- ------------------------------------------------------------ auth modal -->
+<div class="modal hidden" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <div class="modal-card">
+        <button type="button" class="modal-close" id="auth-close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+        </button>
+
+        <p class="eyebrow">Local profile</p>
+        <h2 id="auth-title">Welcome back</h2>
+        <p class="modal-sub" id="auth-sub">Sign in to load the archive saved to this profile.</p>
+
+        <form class="auth-form" id="auth-form" novalidate>
+            <label class="field">
+                <span>Username</span>
+                <input type="text" id="auth-user" name="username" autocomplete="username" maxlength="32" required>
+            </label>
+            <label class="field">
+                <span>Password</span>
+                <input type="password" id="auth-pass" name="password" autocomplete="current-password" maxlength="256" required>
+            </label>
+            <p class="form-error" id="auth-error" role="alert"></p>
+            <button type="submit" class="btn-primary full" id="auth-main-btn">Sign in</button>
+        </form>
+
+        <button type="button" class="link-btn" id="auth-mode-toggle">New here? Create a profile</button>
+        <p class="modal-fine">Profiles are a local convenience, not a security boundary. Anyone with access to this browser can read its storage.</p>
+    </div>
+</div>
+
+<!-- ----------------------------------------------------------- legal modal -->
+<div class="modal hidden" id="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-title">
+    <div class="modal-card wide">
+        <button type="button" class="modal-close" id="legal-close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+        </button>
+
+        <p class="eyebrow">Legal</p>
+        <h2 id="legal-title">Privacy Policy</h2>
+        <p class="modal-fine" id="legal-date">Updated</p>
+        <div class="legal-prose" id="legal-body"></div>
+    </div>
+</div>
+
+<!-- --------------------------------------------------------- confirm modal -->
+<div class="modal hidden" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal-card">
+        <p class="eyebrow">Permanent action</p>
+        <h2 id="confirm-title">Clear the archive?</h2>
+        <p class="modal-sub" id="confirm-body">Every saved problem for this profile will be removed. This cannot be undone.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn-ghost" id="confirm-cancel">Cancel</button>
+            <button type="button" class="btn-danger" id="confirm-ok">Clear archive</button>
+        </div>
+    </div>
+</div>
+
+<!-- ----------------------------------------------------- worksheet studio -->
+<div class="modal hidden" id="worksheet-modal" role="dialog" aria-modal="true" aria-labelledby="worksheet-title">
+    <div class="modal-card wide worksheet-card">
+        <button type="button" class="modal-close" id="worksheet-close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+        </button>
+
+        <p class="eyebrow">Worksheet studio</p>
+        <h2 id="worksheet-title">Generate a sheet and its key</h2>
+        <p class="modal-sub">Pick topics and difficulty. The student sheet and the answer key come from the same verified solver, so a key can never disagree with its questions.</p>
+
+        <div class="ws-controls">
+            <fieldset class="ws-topics">
+                <legend>Topics</legend>
+                <div class="ws-topic-grid" id="ws-topic-grid"></div>
+            </fieldset>
+
+            <div class="ws-options">
+                <label class="field">
+                    <span>Difficulty</span>
+                    <select id="ws-level">
+                        <option>Foundation</option>
+                        <option selected>Standard</option>
+                        <option>Challenge</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Problems</span>
+                    <select id="ws-count">
+                        <option>5</option>
+                        <option selected>10</option>
+                        <option>15</option>
+                        <option>20</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <div class="ws-actions">
+            <button type="button" class="btn-primary" id="ws-generate">Generate</button>
+            <button type="button" class="btn-ghost" id="ws-toggle-answers" aria-pressed="false">Show answer key</button>
+            <button type="button" class="btn-ghost" id="ws-print">Print / PDF</button>
+            <button type="button" class="btn-ghost" id="ws-csv">Download CSV</button>
+        </div>
+
+        <p class="ws-status" id="ws-status" role="status"></p>
+        <div class="ws-preview" id="ws-preview"></div>
+
+        <p class="modal-fine">Print opens your browser's print dialog — choose “Save as PDF” to keep a file. Generation runs on this device; nothing is uploaded.</p>
+    </div>
+</div>
+
+<!-- ------------------------------------------------------- timed practice -->
+<div class="modal hidden" id="practice-modal" role="dialog" aria-modal="true" aria-labelledby="practice-title">
+    <div class="modal-card wide practice-card">
+        <button type="button" class="modal-close" id="practice-close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+        </button>
+
+        <div id="practice-setup">
+            <p class="eyebrow">Exam-style practice</p>
+            <h2 id="practice-title">Timed practice set</h2>
+            <p class="modal-sub">A starter bank of 30 hand-checked problems across statics, materials, fluids, thermodynamics, mathematics and circuits. Review every answer with its working at the end.</p>
+
+            <div class="ws-options">
+                <label class="field">
+                    <span>Questions</span>
+                    <select id="practice-count">
+                        <option>5</option>
+                        <option selected>10</option>
+                        <option>20</option>
+                        <option>30</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Time limit</span>
+                    <select id="practice-minutes">
+                        <option>10</option>
+                        <option>25</option>
+                        <option selected>30</option>
+                        <option>45</option>
+                    </select>
+                </label>
+            </div>
+
+            <button type="button" class="btn-primary full" id="practice-start">Start timed set</button>
+            <p class="modal-fine" id="practice-best">No attempts yet — the timer starts when you do.</p>
+        </div>
+
+        <div id="practice-run" class="hidden">
+            <div class="practice-bar">
+                <span id="practice-progress">1 / 10</span>
+                <span id="practice-timer" class="practice-timer">30:00</span>
+            </div>
+            <div class="practice-progress-track"><div id="practice-progress-fill"></div></div>
+            <p class="practice-topic" id="practice-topic"></p>
+            <p class="practice-question" id="practice-question"></p>
+            <div class="practice-choices" id="practice-choices"></div>
+            <div class="practice-nav">
+                <button type="button" class="btn-ghost" id="practice-prev">Back</button>
+                <button type="button" class="btn-ghost" id="practice-flag" aria-pressed="false">Flag</button>
+                <button type="button" class="btn-primary" id="practice-next">Next</button>
+            </div>
+        </div>
+
+        <div id="practice-review" class="hidden">
+            <p class="eyebrow">Review</p>
+            <h2 id="practice-score">Score</h2>
+            <div class="practice-review-list" id="practice-review-list"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" id="practice-again">New set</button>
+                <button type="button" class="btn-primary" id="practice-done">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- -------------------------------------------------------------- grapher -->
+<div class="modal hidden" id="graph-modal" role="dialog" aria-modal="true" aria-labelledby="graph-title">
+    <div class="modal-card wide graph-card">
+        <button type="button" class="modal-close" id="graph-close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18"></path>
+            </svg>
+        </button>
+
+        <p class="eyebrow">Grapher</p>
+        <h2 id="graph-title">Plot a function</h2>
+        <p class="modal-sub">Type an expression in x. Parsed on this device — no code is executed.</p>
+
+        <div class="graph-input-row">
+            <span class="graph-y">y =</span>
+            <input type="text" id="graph-input" value="x^2" autocomplete="off" spellcheck="false" aria-label="Function of x">
+            <button type="button" class="btn-primary" id="graph-plot">Plot</button>
+        </div>
+        <p class="form-error" id="graph-error" role="alert"></p>
+
+        <div class="graph-presets">
+            <button type="button" class="chip" data-expr="x^2">x²</button>
+            <button type="button" class="chip" data-expr="x^3 - 3x">x³ − 3x</button>
+            <button type="button" class="chip" data-expr="sin(x)">sin x</button>
+            <button type="button" class="chip" data-expr="cos(x)">cos x</button>
+            <button type="button" class="chip" data-expr="exp(-x^2)">e^(−x²)</button>
+            <button type="button" class="chip" data-expr="1/x">1/x</button>
+        </div>
+
+        <div class="graph-stage">
+            <canvas id="graph-canvas" role="img" aria-label="Plot of the entered function"></canvas>
+        </div>
+
+        <div class="graph-controls">
+            <label class="field compact">
+                <span>From x</span>
+                <input type="number" id="graph-xmin" value="-10" step="1">
+            </label>
+            <label class="field compact">
+                <span>To x</span>
+                <input type="number" id="graph-xmax" value="10" step="1">
+            </label>
+            <div class="graph-zoom">
+                <button type="button" class="btn-ghost" id="graph-zoom-in" aria-label="Zoom in">+</button>
+                <button type="button" class="btn-ghost" id="graph-zoom-out" aria-label="Zoom out">−</button>
+                <button type="button" class="btn-ghost" id="graph-reset">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="calculator.js"></script>
+<script src="planner.js"></script>
+<script src="solver_engine.js"></script>
+<script src="theory_engine.js"></script>
+<script src="command_handler.js"></script>
+<script src="tests.js"></script>
+<script src="validator.js"></script>
+<script src="nlp_engine.js"></script>
+<script src="legal_content.js"></script>
+<script src="cloud.js"></script>
+<script src="auth_manager.js"></script>
+<script src="worksheet.js"></script>
+<script src="practice.js"></script>
+<script src="grapher.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
