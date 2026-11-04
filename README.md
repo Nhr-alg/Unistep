@@ -40,17 +40,6 @@ node server.js
 
 No build step and no npm dependencies. Node 18+ is required for the server.
 
-## The free limit
-
-The prototype gives each browser **10 successful calculations**. After the
-tenth, Solve mode, photo upload, example cards, and archive re-solve are locked;
-Theory mode remains available. The count is stored in `localStorage` and synced
-across tabs.
-
-This is a product limit, not a security boundary. Clearing browser storage or
-using devtools can reset it. A paid launch needs server-side accounts and
-entitlements before charging money; the current checkout is deliberately closed.
-
 ## Tests
 
 ```powershell
