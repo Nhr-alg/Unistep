@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification — how UniStep checks its answers</title>
+    <meta name="description" content="UniStep publishes its golden test set. Run all 37 verified problems in your browser and see which pass, with the exact input and expected answer.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="./" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="index.html#how">How it works</a>
+            <a href="topics/index.html">Topics</a>
+            <a href="index.html#pricing">Pricing</a>
+            <a href="verification.html" aria-current="page">Verification</a>
+            <a href="security.html">Security</a>
+        </nav>
+        <a class="btn small primary" href="index.html#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main class="legal">
+    <div class="wrap narrow">
+        <h1>Verification</h1>
+        <p class="updated">Every claim on this page is checkable below.</p>
+
+        <p>Most calculators answer. UniStep <em>verifies</em>: each problem is routed to a specific formula module, the working is generated from that module, and the result is compared against a published expected answer before the feature ships. If the engine has no module for a problem, it says so instead of guessing.</p>
+
+        <h2>Run the suite yourself</h2>
+        <p>The 37 problems below are the same set the engine is tested against. They run in your browser against the same code that powers the demo. Nothing is sent to a server.</p>
+
+        <div class="verify-panel">
+            <div class="verify-bar">
+                <button type="button" class="btn primary" id="verify-run">Run all 37 problems</button>
+                <p class="verify-summary" id="verify-summary" role="status">Not run yet.</p>
+            </div>
+            <div class="verify-table-wrap">
+                <table class="verify-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Status</th>
+                            <th scope="col">Problem</th>
+                            <th scope="col">Expected</th>
+                            <th scope="col">Engine returned</th>
+                        </tr>
+                    </thead>
+                    <tbody id="verify-results">
+                        <tr><td colspan="4" class="verify-empty">Press “Run all 37 problems” to see the current result.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h2>What is covered</h2>
+        <ul>
+            <li><strong>Mechanics:</strong> rolling-energy ratios, uniform acceleration, motion on a rough incline, projectile range, height and flight time.</li>
+            <li><strong>Materials:</strong> axial stress, strain, Young's modulus from load, area and elongation.</li>
+            <li><strong>Fluids:</strong> Reynolds number with regime classification, Bernoulli pressure change.</li>
+            <li><strong>Thermodynamics:</strong> sensible heat for water, aluminium, copper, steel and air; ideal gas law.</li>
+            <li><strong>Circuits:</strong> Ohm's law in all three rearrangements, series and parallel equivalent resistance.</li>
+            <li><strong>Mathematics:</strong> quadratic roots (including complex), linear equations, 2×2 systems, derivatives and integrals of polynomials, definite integrals, 2×2 and 3×3 determinants, 2×2 inverse.</li>
+            <li><strong>Units:</strong> length, time, mass, speed, force, pressure, energy, power and volume, plus Celsius, Kelvin and Fahrenheit.</li>
+        </ul>
+
+        <h2>What it will not do</h2>
+        <ul>
+            <li>It will not solve a problem outside those families. It returns “outside the verified library” rather than an invented answer.</li>
+            <li>It will not read an arbitrary photo of a diagram. OCR extracts text; it does not interpret a free-body diagram.</li>
+            <li>It will not claim a symbolic proof. Derivatives and integrals are polynomial-only, by design.</li>
+            <li>It is not a substitute for your course's conventions on rounding, sign or significant figures.</li>
+        </ul>
+
+        <h2>Why the test set is public</h2>
+        <p>A calculator that hides its test set is asking you to trust a marketing claim. Ours is a file you can read, a button you can press, and a result you can reproduce. When a module regresses, the suite fails before a user sees it.</p>
+
+        <p><a class="btn ghost" href="demo/index.html">Open the demo and try a problem</a></p>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="./" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="topics/index.html">Topics</a>
+            <a href="verification.html">Verification</a>
+            <a href="security.html">Security</a>
+            <a href="index.html#waitlist" data-contact>Contact</a>
+        </nav>
+    </div>
+</footer>
+
+<script src="demo/calculator.js"></script>
+<script src="demo/planner.js"></script>
+<script src="demo/solver_engine.js"></script>
+<script src="demo/tests.js"></script>
+<script src="demo/validator.js"></script>
+<script src="verify.js"></script>
+</body>
+</html>
