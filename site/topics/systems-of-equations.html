@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2×2 systems of equations by Cramer’s rule — UniStep</title>
+    <meta name="description" content="Solve two linear equations in two unknowns with determinants, and see why a zero determinant means no unique solution.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="../index.html" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="../index.html#how">How it works</a>
+            <a href="../index.html#pricing">Pricing</a>
+            <a href="index.html">Topics</a>
+            <a href="../verification.html">Verification</a>
+        </nav>
+        <a class="btn small primary" href="../index.html#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main class="legal">
+    <div class="wrap narrow">
+        <p class="eyebrow">Worked examples</p>
+        <h1>Systems of two equations</h1>
+        <p class="lede">Two linear equations describe two lines. Their intersection is the single point satisfying both. Cramer’s rule finds it directly through the determinant of the coefficient matrix.</p>
+
+        <article class="example">
+            <p class="example-problem">Solve the system 2x + 3y = 8, x - y = 1</p>
+            <p class="example-answer"><span>Answer</span> x = 2.2, y = 1.2</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Write the System</strong>
+                    <span>Put both equations in the form ax + by = c so the coefficients can be compared directly.</span>
+                    <code>2x + 3y = 8;  1x − 1y = 1</code>
+                </li>
+                <li>
+                    <strong>Compute the Determinant</strong>
+                    <span>The determinant of the coefficient matrix must be non-zero for a unique solution.</span>
+                    <code>D = (2)(-1) − (1)(3) = -5</code>
+                </li>
+                <li>
+                    <strong>Apply Cramer's Rule</strong>
+                    <span>Replace one column at a time with the constants to solve for each variable.</span>
+                    <code>x = Dx/D = 2.2;  y = Dy/D = 1.2</code>
+                </li>
+                <li>
+                    <strong>Final Answer</strong>
+                    <span>Both equations are satisfied at this single point.</span>
+                    <code>x = 2.2, y = 1.2</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: Two equations in two unknowns; Determinant is non-zero</p>
+        </article>
+        <article class="example">
+            <p class="example-problem">Solve the system 3x + 2y = 12, x + 4y = 16</p>
+            <p class="example-answer"><span>Answer</span> x = 1.6, y = 3.6</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Write the System</strong>
+                    <span>Put both equations in the form ax + by = c so the coefficients can be compared directly.</span>
+                    <code>3x + 2y = 12;  1x + 4y = 16</code>
+                </li>
+                <li>
+                    <strong>Compute the Determinant</strong>
+                    <span>The determinant of the coefficient matrix must be non-zero for a unique solution.</span>
+                    <code>D = (3)(4) − (1)(2) = 10</code>
+                </li>
+                <li>
+                    <strong>Apply Cramer's Rule</strong>
+                    <span>Replace one column at a time with the constants to solve for each variable.</span>
+                    <code>x = Dx/D = 1.6;  y = Dy/D = 3.6</code>
+                </li>
+                <li>
+                    <strong>Final Answer</strong>
+                    <span>Both equations are satisfied at this single point.</span>
+                    <code>x = 1.6, y = 3.6</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: Two equations in two unknowns; Determinant is non-zero</p>
+        </article>
+
+        <div class="topic-cta">
+            <p>Every answer above was produced by the same engine that runs in the app — not written by hand for this page.</p>
+            <a class="btn primary" href="../demo/index.html">Try your own problem</a>
+            <a class="btn ghost" href="../verification.html">See the test suite</a>
+        </div>
+
+        <nav class="topic-related" aria-label="Related topics"><span>Related</span><a href="linear-equations.html">Linear equations</a><a href="determinants.html">Determinants</a></nav>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="../index.html" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="../privacy.html">Privacy</a>
+            <a href="../terms.html">Terms</a>
+            <a href="../verification.html">Verification</a>
+            <a href="../security.html">Security</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
