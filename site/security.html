@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security — UniStep</title>
+    <meta name="description" content="How UniStep stores your problems, what leaves your device, and how accounts are protected.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="./" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="index.html#how">How it works</a>
+            <a href="topics/index.html">Topics</a>
+            <a href="index.html#pricing">Pricing</a>
+            <a href="verification.html">Verification</a>
+            <a href="security.html" aria-current="page">Security</a>
+        </nav>
+        <a class="btn small primary" href="index.html#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main class="legal">
+    <div class="wrap narrow">
+        <h1>Security</h1>
+        <p class="updated">Last updated: October 27, 2026</p>
+
+        <p>UniStep is local-first. The solver, the worksheet generator and the practice bank run entirely in your browser. This page states exactly what stays on your device, what a synced account adds, and how that account is protected.</p>
+
+        <h2>What stays on your device</h2>
+        <ul>
+            <li><strong>Your problems and derivations.</strong> Solving never calls a server. The engine is JavaScript delivered with the page.</li>
+            <li><strong>Photos.</strong> Image text recognition (OCR) runs locally in a WebAssembly worker. The image is not uploaded.</li>
+            <li><strong>Generated worksheets and keys.</strong> Built in the browser; printing and CSV export use local browser APIs.</li>
+        </ul>
+
+        <h2>What a synced account adds</h2>
+        <p>If you create an account on a deployment that has a server, the following is stored so your archive follows you between devices:</p>
+        <ul>
+            <li>The problem text you solved, a short answer preview, the tag you applied, and the timestamp.</li>
+            <li>Your username and a salted <strong>scrypt</strong> password hash. The plaintext password is never stored, in the browser or on the server.</li>
+            <li>Nothing else. Full derivations are recomputed on your device when you reopen an entry, so the working you see is always produced by the current engine.</li>
+        </ul>
+        <p>If no server is reachable — static hosting, offline, or the file opened from disk — accounts fall back to local profiles and the app behaves exactly as before.</p>
+
+        <h2>How the account layer is built</h2>
+        <ul>
+            <li><strong>Password hashing:</strong> scrypt (N=16384, r=8, p=1) with a 16-byte random salt per user, compared in constant time.</li>
+            <li><strong>Sessions:</strong> 32 random bytes as an opaque token in an <code>HttpOnly</code>, <code>SameSite=Strict</code> cookie. No token is ever written to JavaScript-readable storage.</li>
+            <li><strong>Login timing:</strong> unknown usernames still run the full key derivation, so response time does not reveal which accounts exist.</li>
+            <li><strong>Cross-site requests:</strong> state-changing endpoints reject any request whose <code>Origin</code> does not match the host.</li>
+            <li><strong>Rate limits:</strong> sign-up, login, archive writes and the waitlist form are all rate-limited per address.</li>
+            <li><strong>Input handling:</strong> archive payloads are rebuilt field by field with length caps; nothing from a client is written through verbatim.</li>
+        </ul>
+
+        <h2>How the pages are built</h2>
+        <ul>
+            <li>A strict <code>Content-Security-Policy</code> on every page: no inline scripts, no inline styles, no third-party scripts, no framing.</li>
+            <li>No <code>eval()</code>. The grapher uses a hand-written recursive-descent parser, so a pasted expression is data, never code.</li>
+            <li>User text reaches the page through <code>textContent</code> and DOM construction, not HTML strings.</li>
+            <li>Static file serving resolves and checks every path, blocks traversal, and refuses to serve the data directory or server source.</li>
+        </ul>
+
+        <h2>What we do not do</h2>
+        <ul>
+            <li>No advertising or third-party analytics scripts.</li>
+            <li>No selling or sharing of personal data.</li>
+            <li>No claim of end-to-end encryption. Archive data is stored readable on the server so it can be synced; treat it as you would a shared document.</li>
+            <li>No claim of a completed third-party security audit. None has been performed.</li>
+        </ul>
+
+        <h2>Known limits</h2>
+        <ul>
+            <li>The reference server is a single Node process with JSON-file storage. It is sized for a pilot, not a multi-region deployment.</li>
+            <li>Anyone with access to an unlocked browser profile can read the local archive. Local profiles are a convenience selector, not an authentication boundary.</li>
+            <li>The 10-solve free limit is stored in browser storage and can be reset with developer tools. It is a product limit, not an access control. Paid access will need server-side entitlements before billing opens.</li>
+            <li>There is no password reset flow yet. A forgotten password means a new account.</li>
+        </ul>
+
+        <h2>Reporting a problem</h2>
+        <p>If you find a vulnerability, please report it before disclosing it publicly. Use the contact link in the site footer; a dedicated security address is published once the domain and mailbox are live. We will confirm receipt and tell you what we intend to do.</p>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="./" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="topics/index.html">Topics</a>
+            <a href="verification.html">Verification</a>
+            <a href="security.html">Security</a>
+            <a href="index.html#waitlist" data-contact>Contact</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
