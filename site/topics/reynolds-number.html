@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reynolds number and flow regime — UniStep</title>
+    <meta name="description" content="Compute Re from density, velocity, diameter and viscosity, then classify the flow as laminar, transitional or turbulent.">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="../index.html" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="../index.html#how">How it works</a>
+            <a href="../index.html#pricing">Pricing</a>
+            <a href="index.html">Topics</a>
+            <a href="../verification.html">Verification</a>
+        </nav>
+        <a class="btn small primary" href="../index.html#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main class="legal">
+    <div class="wrap narrow">
+        <p class="eyebrow">Worked examples</p>
+        <h1>Reynolds number</h1>
+        <p class="lede">The Reynolds number compares inertial forces to viscous forces. Below about 2300 viscous effects dominate and flow is laminar; above about 4000 inertia dominates and flow is turbulent.</p>
+
+        <article class="example">
+            <p class="example-problem">Find the Reynolds number for water at 2 m/s in a pipe of diameter 0.05 m</p>
+            <p class="example-answer"><span>Answer</span> 99800</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Identify the Principle</strong>
+                    <span>The Reynolds number is the ratio of inertial to viscous forces in a flow.</span>
+                    <code>Re = ρ·v·D / μ</code>
+                </li>
+                <li>
+                    <strong>Convert to Base Units</strong>
+                    <span>Diameter in metres, velocity in m/s, density in kg/m³, viscosity in Pa·s.</span>
+                    <code>D = 0.05 m,  v = 2 m/s,  ρ = 1000 kg/m³,  μ = 0.001002 Pa·s</code>
+                </li>
+                <li>
+                    <strong>Compute</strong>
+                    <span>Substitute the properties into the definition.</span>
+                    <code>Re = (1000)(2)(0.05) / 0.001002</code>
+                </li>
+                <li>
+                    <strong>Classify the Flow</strong>
+                    <span>Re = 99800 falls in the turbulent regime.</span>
+                    <code>Re = 99800 → turbulent</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: Fully developed flow; Newtonian fluid; Constant properties; Water at about 20 °C</p>
+        </article>
+        <article class="example">
+            <p class="example-problem">Find the Reynolds number for air at 5 m/s in a pipe of diameter 0.1 m</p>
+            <p class="example-answer"><span>Answer</span> 33840</p>
+            <ol class="example-steps">
+                <li>
+                    <strong>Identify the Principle</strong>
+                    <span>The Reynolds number is the ratio of inertial to viscous forces in a flow.</span>
+                    <code>Re = ρ·v·D / μ</code>
+                </li>
+                <li>
+                    <strong>Convert to Base Units</strong>
+                    <span>Diameter in metres, velocity in m/s, density in kg/m³, viscosity in Pa·s.</span>
+                    <code>D = 0.1 m,  v = 5 m/s,  ρ = 1.225 kg/m³,  μ = 0.0000181 Pa·s</code>
+                </li>
+                <li>
+                    <strong>Compute</strong>
+                    <span>Substitute the properties into the definition.</span>
+                    <code>Re = (1.225)(5)(0.1) / 0.0000181</code>
+                </li>
+                <li>
+                    <strong>Classify the Flow</strong>
+                    <span>Re = 33840 falls in the turbulent regime.</span>
+                    <code>Re = 33840 → turbulent</code>
+                </li>
+            </ol>
+            <p class="example-assumptions">Assumptions: Fully developed flow; Newtonian fluid; Constant properties; Air at about 20 °C</p>
+        </article>
+
+        <div class="topic-cta">
+            <p>Every answer above was produced by the same engine that runs in the app — not written by hand for this page.</p>
+            <a class="btn primary" href="../demo/index.html">Try your own problem</a>
+            <a class="btn ghost" href="../verification.html">See the test suite</a>
+        </div>
+
+        <nav class="topic-related" aria-label="Related topics"><span>Related</span><a href="bernoulli-equation.html">Bernoulli's equation</a></nav>
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="../index.html" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true"><path d="M4 19h5v-5h5V9h6"></path></svg></span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="../privacy.html">Privacy</a>
+            <a href="../terms.html">Terms</a>
+            <a href="../verification.html">Verification</a>
+            <a href="../security.html">Security</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
