@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniStep — Verified step-by-step engineering solutions</title>
+    <meta name="description" content="Verified, unit-aware derivations for engineering problems. Step-by-step solutions for students, worksheet generators for tutoring centers, and exam-style practice for FE/PE prep.">
+    <meta name="robots" content="index,follow">
+    <meta name="theme-color" content="#f4f1e8">
+    <meta name="color-scheme" content="light">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23c24627'/%3E%3Cpath d='M14 50h12V38h12V26h12' stroke='%23f4f1e8' stroke-width='6' fill='none'/%3E%3C/svg%3E">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="./" aria-label="UniStep home">
+            <span class="logo-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true">
+                    <path d="M4 19h5v-5h5V9h6"></path>
+                </svg>
+            </span>
+            <span data-brand>UniStep</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+            <a href="#how">How it works</a>
+            <a href="topics/index.html">Topics</a>
+            <a href="#pricing">Pricing</a>
+            <a href="verification.html">Verification</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+        <a class="btn small primary" href="#waitlist">Join the beta</a>
+    </div>
+</header>
+
+<main id="main">
+    <section class="hero">
+        <div class="wrap">
+            <div class="tabs" role="tablist" aria-label="Choose your track">
+                <button type="button" role="tab" id="tab-students" data-audience="students" aria-selected="true" aria-controls="hero-panel">For students</button>
+                <button type="button" role="tab" id="tab-tutors" data-audience="tutors" aria-selected="false" aria-controls="hero-panel" tabindex="-1">For tutoring centers</button>
+                <button type="button" role="tab" id="tab-fe" data-audience="fe" aria-selected="false" aria-controls="hero-panel" tabindex="-1">For FE/PE prep</button>
+            </div>
+
+            <div class="hero-grid" id="hero-panel" role="tabpanel" aria-labelledby="tab-students">
+                <div class="hero-copy">
+                    <p class="eyebrow" id="hero-eyebrow">Private beta · Fall 2026</p>
+                    <h1 id="hero-title">Step-by-step engineering solutions that show their work — and check their units.</h1>
+                    <p class="lede" id="hero-sub">Type a problem or upload a photo. Get the governing equation, a verified derivation, and a dimensional check — not just an answer.</p>
+                    <ul class="points" id="hero-points"></ul>
+                    <div class="cta-row">
+                        <a class="btn primary" href="#waitlist" id="hero-cta">Join the founding class</a>
+                        <a class="btn ghost" href="demo/index.html" target="_blank" rel="noopener" id="demo-cta">Try the prototype</a>
+                    </div>
+                    <p class="micro">No card required · 10 free solves · Founding price locked for 12 months</p>
+                </div>
+
+                <aside class="example" aria-label="Example verified derivation">
+                    <div class="example-head">
+                        <span class="example-label">Specimen 01</span>
+                        <span class="badge">Physics · Rotation</span>
+                    </div>
+                    <p class="example-question">A solid sphere rolls without slipping. Find the ratio of rotational KE to total KE.</p>
+                    <div class="example-result">
+                        <span class="result-label">Result</span>
+                        <div class="result-value">
+                            <strong>2/7</strong>
+                            <span class="result-unit">ratio</span>
+                        </div>
+                    </div>
+                    <ol class="example-steps">
+                        <li>
+                            <span class="step-index">STEP 01</span>
+                            <p>Pure rolling links linear and angular velocity.</p>
+                            <code>v = ωR</code>
+                        </li>
+                        <li>
+                            <span class="step-index">STEP 02</span>
+                            <p>Use the moment of inertia for a solid sphere.</p>
+                            <code>I = (2/5)MR²</code>
+                        </li>
+                        <li>
+                            <span class="step-index">STEP 03</span>
+                            <p>Rotational and translational energy combine.</p>
+                            <code>K = (1/2)Mv² + (1/5)Mv²</code>
+                        </li>
+                    </ol>
+                    <div class="example-checks">
+                        <span>✓ Units checked</span>
+                        <span>✓ Independent cross-calculation</span>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="how">
+        <div class="wrap">
+            <div class="section-head">
+                <p class="eyebrow">Why it is different</p>
+                <h2>Built on checks, not confident guesses.</h2>
+                <p class="section-sub">A calculator gives you an answer. A model can invent one. UniStep shows the governing equation, the derivation, and the dimensional check behind every result.</p>
+            </div>
+            <div class="feature-grid">
+                <article class="feature">
+                    <div class="feature-icon" aria-hidden="true">∑</div>
+                    <h3>Symbolic verification</h3>
+                    <p>Results are checked algebraically and, where possible, solved a second way. If the two paths disagree, you see a warning instead of a wrong answer.</p>
+                </article>
+                <article class="feature">
+                    <div class="feature-icon" aria-hidden="true">⇄</div>
+                    <h3>Dimensional analysis</h3>
+                    <p>Units are tracked through every step — nm to m, g to kg, degrees to radians — and the final unit is validated against the quantity you asked for.</p>
+                </article>
+                <article class="feature">
+                    <div class="feature-icon" aria-hidden="true">✎</div>
+                    <h3>Exam-style derivations</h3>
+                    <p>Each solution names the principle, states the governing equation, substitutes with units, and ends with a sanity check. It reads like the solution you are expected to write.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="section pricing-section" id="pricing">
+        <div class="wrap">
+            <div class="section-head">
+                <p class="eyebrow">Founding pricing</p>
+                <h2 id="pricing-title">Founding access</h2>
+                <p class="section-sub" id="pricing-sub">Early members lock 50% off for 12 months. Cancel any time; 14-day refund, no questions asked.</p>
+            </div>
+            <div class="pricing-grid" id="pricing-grid"></div>
+            <p class="pricing-note">Prices shown in USD. Paid tiers are waitlists while checkout is closed. Tutoring pilots are requested through the waitlist.</p>
+        </div>
+    </section>
+
+    <section class="section waitlist-section" id="waitlist">
+        <div class="wrap split">
+            <div class="waitlist-copy">
+                <p class="eyebrow">Private beta</p>
+                <h2 id="form-title">Join the founding class</h2>
+                <p class="section-sub" id="form-sub">We are opening a small beta for first-year engineering students. Tell us what you are stuck on and we will invite you in batches.</p>
+                <ul class="check-list">
+                    <li>Founding price locked for 12 months</li>
+                    <li>Direct line to the person building it</li>
+                    <li>Your hardest problems shape the roadmap</li>
+                </ul>
+                <p class="privacy-note">We store your email and answers to contact you about the beta. No tracking cookies, no third-party analytics. See the <a href="privacy.html">privacy policy</a>.</p>
+            </div>
+
+            <form id="waitlist-form" class="card form" method="post" action="/api/waitlist" novalidate>
+                <input type="hidden" name="segment" id="segment-field" value="students">
+                <div class="hp" aria-hidden="true">
+                    <label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label>
+                </div>
+                <label class="field">
+                    <span>Email</span>
+                    <input type="email" name="email" id="email-field" autocomplete="email" required placeholder="you@university.edu" maxlength="254">
+                </label>
+                <div class="field-row">
+                    <label class="field">
+                        <span>I am a</span>
+                        <select name="role" id="role-field">
+                            <option value="student">Engineering student</option>
+                            <option value="tutor">Tutor / center owner</option>
+                            <option value="educator">Educator</option>
+                            <option value="exam">FE/PE candidate</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Plan</span>
+                        <select name="plan" id="plan-field"></select>
+                    </label>
+                </div>
+                <label class="field">
+                    <span>Hardest topic right now <em>(optional)</em></span>
+                    <textarea name="topic" id="topic-field" rows="3" maxlength="200" placeholder="e.g. rolling motion with friction, unit conversions, circuits"></textarea>
+                </label>
+                <label class="check">
+                    <input type="checkbox" name="consent" id="consent-field" required>
+                    <span>I agree to the <a href="privacy.html">privacy policy</a> and to receive beta updates.</span>
+                </label>
+                <button type="submit" class="btn primary full" id="submit-btn">Request founding access</button>
+                <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+            </form>
+        </div>
+    </section>
+
+    <section class="section" id="faq">
+        <div class="wrap narrow">
+            <div class="section-head">
+                <p class="eyebrow">Questions</p>
+                <h2>Before you join</h2>
+            </div>
+            <details>
+                <summary>Is this a homework-cheating tool?</summary>
+                <p>No. It is built for learning and verification: every result comes with the governing equation and a derivation you can follow, check, and reproduce in an exam. We do not write essays, and we do not hide the steps.</p>
+            </details>
+            <details>
+                <summary>How do you know the answers are correct?</summary>
+                <p>Every result is checked symbolically, and where possible solved through a second independent path. Units are tracked through each step. If a problem falls outside the verified library, the tool says so instead of guessing.</p>
+            </details>
+            <details>
+                <summary>What topics will the beta cover?</summary>
+                <p>The first release focuses on first-year mechanics: statics, dynamics, rotation, energy, momentum, and the unit conversions that go with them. Thermodynamics, circuits, and chemistry follow based on beta demand.</p>
+            </details>
+            <details>
+                <summary>How does pricing work?</summary>
+                <p>Students get 10 free verified solves to try the solver. When those are used, the prototype locks on that browser. Paid access is not on sale yet: every paid tier is a waitlist. When billing opens, founding members keep 50% off for 12 months and every paid plan has a 14-day refund window. Tutoring centers can request a two-week pilot through the same list.</p>
+            </details>
+            <details>
+                <summary>What happens to my data?</summary>
+                <p>Your problems stay on your device in the app. For the beta waitlist we store your email, role, plan interest, and optional topic answer. You can ask us to delete them at any time; see the <a href="privacy.html">privacy policy</a>.</p>
+            </details>
+        </div>
+    </section>
+
+    <section class="cta-band">
+        <div class="wrap cta-band-inner">
+            <div>
+                <h2>Stop guessing. Start verifying.</h2>
+                <p>Join the founding class and help shape the first release.</p>
+            </div>
+            <a class="btn primary" href="#waitlist">Join the beta</a>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap footer-inner">
+        <div>
+            <a class="logo" href="./" aria-label="UniStep home">
+                <span class="logo-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true">
+                        <path d="M4 19h5v-5h5V9h6"></path>
+                    </svg>
+                </span>
+                <span data-brand>UniStep</span>
+            </a>
+            <p class="footer-note">Verified engineering solutions. Built for learning, not shortcuts.</p>
+        </div>
+        <nav class="footer-links" aria-label="Legal">
+            <a href="privacy.html">Privacy</a>
+            <a href="terms.html">Terms</a>
+            <a href="topics/index.html">Topics</a>
+            <a href="verification.html">Verification</a>
+            <a href="security.html">Security</a>
+            <a href="#waitlist" data-contact>Contact</a>
+        </nav>
+    </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="checkout.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
