@@ -1495,38 +1495,68 @@ class SuperSolverEngine {
 
     // ------------------------------------------------------------ aerospace
 
+    // Helper: try many label aliases, then fall back to any number in the text.
+    findParam(text, aliases, unitPattern = null) {
+        // 1) Try named value with each alias
+        for (const alias of aliases) {
+            const v = this.namedValue(text, [alias]);
+            if (v !== null && Number.isFinite(v) && v > 0) return v;
+        }
+        // 2) Try unit-based extraction
+        if (unitPattern) {
+            const v = this.unitValue(text, unitPattern);
+            if (v !== null && Number.isFinite(v) && v > 0) return v;
+        }
+        // 3) Fallback: grab the first positive number in the text
+        const all = this.extractNumbers(text);
+        const positive = all.filter((n) => n > 0);
+        if (positive.length > 0) return positive[0];
+        return null;
+    }
+
+    // Strip conversational prefixes so "how much lift does..." still matches keywords.
+    stripPrefix(text) {
+        return text
+            .replace(/^(how much|how many|what is|what\'s|can you|calculate|compute|find|give me|i need|tell me)\s+/i, '')
+            .replace(/\?\s*$/, '')
+            .trim();
+    }
+
     solveAerospace(input) {
-        const text = String(input).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        const raw = String(input);
+        const text = this.stripPrefix(raw).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
 
         // ---- Constants ----
-        const G = 6.67430e-11;        // m^3 kg^-1 s^-2
-        const M_EARTH = 5.972e24;     // kg
-        const R_EARTH = 6371000;      // m
-        const G0 = 9.80665;           // m/s^2 (standard gravity)
-        const MU_EARTH = G * M_EARTH; // m^3/s^2
+        const G = 6.67430e-11;
+        const M_EARTH = 5.972e24;
+        const R_EARTH = 6371000;
+        const G0 = 9.80665;
+        const MU_EARTH = G * M_EARTH;
 
-        const isRocket = /\brocket\b|delta.v|\u0394v|delta v|specific impulse|isp|exhaust velocity|mass ratio|propellant/.test(text);
-        const isOrbital = /\borbit\b|orbital|satellite|circular orbit/.test(text);
-        const isEscape = /\bescape\b/.test(text);
-        const isLift = /\blift\b/.test(text);
-        const isDrag = /\bdrag\b/.test(text);
-        const isMach = /\bmach\b/.test(text);
-        const isAtmosphere = /\batmosphere\b|standard atmosphere|density at altitude|pressure at altitude/.test(text);
+        // ---- Keyword detection with word boundaries & aliases ----
+        const kw = (re) => re.test(text);
+
+        const isRocket = /\brocket\b|delta.v|\u0394v|delta v|specific impulse|isp|exhaust velocity|mass ratio|propellant|how fast.*rocket/.test(text);
+        const isOrbital = /\borbit\b|orbital|satellite|circular orbit|how fast.*orbit/.test(text);
+        const isEscape = /\bescape\b|leave earth|break free|escape earth/.test(text);
+        const isLift = /\blift\b|how much lift|wing lift/.test(text);
+        const isDrag = /\bdrag\b|how much drag|air resistance/.test(text);
+        const isMach = /\bmach\b|speed of sound|mach number/.test(text);
+        const isAtmosphere = /\batmosphere\b|standard atmosphere|density at altitude|pressure at altitude|air at altitude/.test(text);
 
         if (!isRocket && !isOrbital && !isEscape && !isLift && !isDrag && !isMach && !isAtmosphere) return null;
 
-        // ---- Helper: extract named numbers ----
-        const num = (labels) => this.namedValue(text, labels);
-        const unitNum = (pattern) => this.unitValue(text, pattern);
+        // ---- Helper: extract a parameter with many aliases ----
+        const get = (aliases, unitPattern) => this.findParam(text, aliases, unitPattern);
 
         // ====================================================================
         // ROCKET EQUATION (Tsiolkovsky)
         // ====================================================================
         if (isRocket) {
-            const m0 = unitNum("kg|tonnes?|tons?|lb") ?? num(["initial mass", "wet mass", "starting mass", "m0"]);
-            const mf = unitNum("kg|tonnes?|tons?|lb") ?? num(["final mass", "dry mass", "ending mass", "mf"]);
-            const ve = unitNum("m\\/s") ?? num(["exhaust velocity", "ve"]);
-            const isp = num(["specific impulse", "isp"]) ?? (ve !== null ? ve / G0 : null);
+            const m0 = get(["initial mass", "wet mass", "starting mass", "start mass", "launch mass", "m0", "rocket mass"], "kg|tonnes?|tons?|lb|kg");
+            const mf = get(["final mass", "dry mass", "ending mass", "burnout mass", "mf", "empty mass"], "kg|tonnes?|tons?|lb|kg");
+            const ve = get(["exhaust velocity", "ve", "exhaust speed"], "m\\/s|m/s");
+            const isp = get(["specific impulse", "isp"], "");
 
             if (m0 !== null && mf !== null && (ve !== null || isp !== null)) {
                 const veFinal = ve !== null ? ve : isp * G0;
@@ -1537,7 +1567,6 @@ class SuperSolverEngine {
                     return { error: "Delta-v is not finite. Check that initial mass is greater than final mass." };
                 }
 
-                // Sensitivity analysis
                 const dvMinus10 = veFinal * Math.log(m0 / (mf * 1.1));
                 const dvPlus10 = veFinal * Math.log(m0 / (mf * 0.9));
                 const dvIspMinus10 = (isp * G0 * 0.9) * Math.log(ratio);
@@ -1579,31 +1608,29 @@ class SuperSolverEngine {
                     assumptions: ["Impulsive burn (instantaneous)", "No gravity or drag losses", "Constant exhaust velocity", "Vacuum conditions"]
                 };
             }
-            return { error: "I need initial mass, final mass, and either exhaust velocity or specific impulse. Example: 'rocket delta-v with initial mass 500000 kg, final mass 100000 kg, specific impulse 300 s'" };
+            return { error: "I need initial mass, final mass, and either exhaust velocity or specific impulse. Try: 'rocket delta-v with initial mass 500000 kg, final mass 100000 kg, specific impulse 300 s'" };
         }
 
         // ====================================================================
         // ORBITAL VELOCITY
         // ====================================================================
         if (isOrbital) {
-            const altitude = unitNum("m|km|mi") ?? num(["altitude", "height above earth", "orbital altitude"]);
-            const radius = unitNum("m|km|mi") ?? num(["orbital radius", "distance from center", "r"]);
+            const altitude = get(["altitude", "height", "height above earth", "orbital altitude", "above earth"], "m|km|mi|ft");
+            const radius = get(["orbital radius", "distance from center", "r", "orbit radius"], "m|km|mi|ft");
 
             let r;
             if (radius !== null) {
                 r = radius;
             } else if (altitude !== null) {
-                const altM = altitude < 10000 ? altitude * 1000 : altitude; // assume km if < 10000
+                const altM = altitude < 10000 ? altitude * 1000 : altitude;
                 r = R_EARTH + altM;
             } else {
-                return { error: "I need orbital radius or altitude above Earth. Example: 'orbital velocity at 400 km altitude'" };
+                return { error: "I need orbital radius or altitude above Earth. Try: 'orbital velocity at 400 km altitude'" };
             }
 
             if (!(r > 0)) return { error: "Radius must be greater than zero." };
 
             const v = Math.sqrt(MU_EARTH / r);
-            const period = 2 * Math.PI * Math.sqrt(Math.pow(r, 3) / MU_EARTH);
-            const vEscape = Math.sqrt(2 * MU_EARTH / r);
 
             return {
                 success: true,
@@ -1634,20 +1661,20 @@ class SuperSolverEngine {
                     {
                         number: 4,
                         title: "Sensitivity \u2014 How Altitude Changes Your Orbit",
-                        explanation: "Higher altitude means slower orbital speed but longer period. Compare at 200 km vs 800 km:",
+                        explanation: "Higher altitude means slower orbital speed but longer period.",
                         formula: `At 200 km: v ~ ${this.fmt(Math.sqrt(MU_EARTH / (R_EARTH + 200000)), 4)} m/s  |  At 800 km: v ~ ${this.fmt(Math.sqrt(MU_EARTH / (R_EARTH + 800000)), 4)} m/s`
                     }
                 ],
-                    assumptions: ["Circular orbit", "Earth as central body", "No atmospheric drag", "Two-body problem"]
-                };
-            }
+                assumptions: ["Circular orbit", "Earth as central body", "No atmospheric drag", "Two-body problem"]
+            };
+        }
 
         // ====================================================================
         // ESCAPE VELOCITY
         // ====================================================================
         if (isEscape) {
-            const altitude = unitNum("m|km|mi") ?? num(["altitude", "height above earth"]);
-            const radius = unitNum("m|km|mi") ?? num(["orbital radius", "distance from center", "r"]);
+            const altitude = get(["altitude", "height", "height above earth", "above earth"], "m|km|mi|ft");
+            const radius = get(["orbital radius", "distance from center", "r", "orbit radius"], "m|km|mi|ft");
 
             let r;
             if (radius !== null) {
@@ -1656,7 +1683,7 @@ class SuperSolverEngine {
                 const altM = altitude < 10000 ? altitude * 1000 : altitude;
                 r = R_EARTH + altM;
             } else {
-                return { error: "I need altitude above Earth or distance from center. Example: 'escape velocity from Earth surface'" };
+                return { error: "I need altitude above Earth or distance from center. Try: 'escape velocity from Earth surface'" };
             }
 
             if (!(r > 0)) return { error: "Radius must be greater than zero." };
@@ -1690,22 +1717,21 @@ class SuperSolverEngine {
                         formula: "v_e (surface) \u2248 11,186 m/s  |  v_orbit (LEO) \u2248 7,800 m/s"
                     }
                 ],
-                    assumptions: ["No atmospheric drag", "No planetary rotation", "Two-body problem", "No other celestial bodies"]
-                };
-            }
+                assumptions: ["No atmospheric drag", "No planetary rotation", "Two-body problem", "No other celestial bodies"]
+            };
+        }
 
         // ====================================================================
         // LIFT FORCE
         // ====================================================================
         if (isLift) {
             const rho = this.namedValue(text, ["density", "air density"]) ?? 1.225;
-            const v = unitNum("m\\/s|km\\/h|mph") ?? num(["velocity", "airspeed", "speed"]);
-            const s = unitNum("m2|mA�|ft2|ftA�") ?? num(["wing area", "surface area", "area s"]);
-            const cl = num(["lift coefficient", "cl", "c_l"]);
+            const v = get(["velocity", "airspeed", "speed", "how fast"], "m\\/s|m/s|km\\/h|mph|knots?");
+            const s = get(["wing area", "surface area", "area", "reference area", "s"], "m2|mA�|ft2|ftA�");
+            const cl = get(["lift coefficient", "cl", "c_l", "lift coef"], "");
 
             if (v !== null && s !== null && cl !== null) {
-                const vMps = v; // assume m/s if no unit, or handle km/h
-                const lift = 0.5 * rho * vMps * vMps * s * cl;
+                const lift = 0.5 * rho * v * v * s * cl;
 
                 return {
                     success: true,
@@ -1725,19 +1751,19 @@ class SuperSolverEngine {
                             number: 2,
                             title: "Substitute",
                             explanation: "Dynamic pressure = \u00BD \u03C1 v\u00B2.",
-                            formula: `q = \u00BD \u00D7 ${this.fmt(rho)} \u00D7 ${this.fmt(vMps)}\u00B2 = ${this.fmt(0.5 * rho * vMps * vMps, 4)} Pa`
+                            formula: `q = \u00BD \u00D7 ${this.fmt(rho)} \u00D7 ${this.fmt(v)}\u00B2 = ${this.fmt(0.5 * rho * v * v, 4)} Pa`
                         },
                         {
                             number: 3,
                             title: "Final Answer",
                             explanation: "Multiply by wing area and lift coefficient.",
-                            formula: `L = ${this.fmt(0.5 * rho * vMps * vMps * s, 4)} \u00D7 ${this.fmt(cl)} = ${this.fmt(lift, 4)} N`
+                            formula: `L = ${this.fmt(0.5 * rho * v * v * s, 4)} \u00D7 ${this.fmt(cl)} = ${this.fmt(lift, 4)} N`
                         }
                     ],
                     assumptions: ["Incompressible flow", "Constant lift coefficient", "Steady level flight"]
                 };
             }
-            return { error: "I need velocity, wing area, and lift coefficient. Example: 'lift force with velocity 70 m/s, wing area 20 m\u00B2, lift coefficient 0.5'" };
+            return { error: "I need velocity, wing area, and lift coefficient. Try: 'lift force with velocity 70 m/s, wing area 20 m\u00B2, lift coefficient 0.5'" };
         }
 
         // ====================================================================
@@ -1745,13 +1771,12 @@ class SuperSolverEngine {
         // ====================================================================
         if (isDrag) {
             const rho = this.namedValue(text, ["density", "air density"]) ?? 1.225;
-            const v = unitNum("m\\/s|km\\/h|mph") ?? num(["velocity", "airspeed", "speed"]);
-            const s = unitNum("m2|mA�|ft2|ftA�") ?? num(["reference area", "frontal area", "area s"]);
-            const cd = num(["drag coefficient", "cd", "c_d"]);
+            const v = get(["velocity", "airspeed", "speed", "how fast"], "m\\/s|m/s|km\\/h|mph|knots?");
+            const s = get(["reference area", "frontal area", "area", "s"], "m2|mA�|ft2|ftA�");
+            const cd = get(["drag coefficient", "cd", "c_d", "drag coef"], "");
 
             if (v !== null && s !== null && cd !== null) {
-                const vMps = v;
-                const drag = 0.5 * rho * vMps * vMps * s * cd;
+                const drag = 0.5 * rho * v * v * s * cd;
 
                 return {
                     success: true,
@@ -1771,31 +1796,31 @@ class SuperSolverEngine {
                             number: 2,
                             title: "Substitute",
                             explanation: "Dynamic pressure = \u00BD \u03C1 v\u00B2.",
-                            formula: `q = \u00BD \u00D7 ${this.fmt(rho)} \u00D7 ${this.fmt(vMps)}\u00B2 = ${this.fmt(0.5 * rho * vMps * vMps, 4)} Pa`
+                            formula: `q = \u00BD \u00D7 ${this.fmt(rho)} \u00D7 ${this.fmt(v)}\u00B2 = ${this.fmt(0.5 * rho * v * v, 4)} Pa`
                         },
                         {
                             number: 3,
                             title: "Final Answer",
                             explanation: "Multiply by reference area and drag coefficient.",
-                            formula: `D = ${this.fmt(0.5 * rho * vMps * vMps * s, 4)} \u00D7 ${this.fmt(cd)} = ${this.fmt(drag, 4)} N`
+                            formula: `D = ${this.fmt(0.5 * rho * v * v * s, 4)} \u00D7 ${this.fmt(cd)} = ${this.fmt(drag, 4)} N`
                         }
                     ],
                     assumptions: ["Incompressible flow", "Constant drag coefficient", "Steady flight"]
                 };
             }
-            return { error: "I need velocity, reference area, and drag coefficient. Example: 'drag force with velocity 250 m/s, reference area 15 m\u00B2, drag coefficient 0.03'" };
+            return { error: "I need velocity, reference area, and drag coefficient. Try: 'drag force with velocity 250 m/s, reference area 15 m\u00B2, drag coefficient 0.03'" };
         }
 
         // ====================================================================
         // MACH NUMBER
         // ====================================================================
         if (isMach) {
-            const v = unitNum("m\\/s|km\\/h|mph|knots?") ?? num(["velocity", "airspeed", "speed"]);
-            const a = num(["speed of sound", "mach speed", "a"]) ?? 343; // m/s at sea level, 15°C
+            const v = get(["velocity", "airspeed", "speed", "how fast"], "m\\/s|m/s|km\\/h|mph|knots?");
+            const a = get(["speed of sound", "mach speed", "a", "sound speed"], "");
 
             if (v !== null) {
-                const vMps = v;
-                const mach = vMps / a;
+                const aFinal = a !== null ? a : 343;
+                const mach = v / aFinal;
 
                 let regime = "subsonic";
                 if (mach > 5) regime = "hypersonic";
@@ -1820,7 +1845,7 @@ class SuperSolverEngine {
                             number: 2,
                             title: "Substitute",
                             explanation: `Speed of sound at sea level (15\u00B0C) \u2248 343 m/s.`,
-                            formula: `M = ${this.fmt(vMps)} / ${this.fmt(a)} = ${this.fmt(mach, 3)}`
+                            formula: `M = ${this.fmt(v)} / ${this.fmt(aFinal)} = ${this.fmt(mach, 3)}`
                         },
                         {
                             number: 3,
@@ -1832,29 +1857,26 @@ class SuperSolverEngine {
                     assumptions: ["Constant speed of sound", "Standard atmosphere"]
                 };
             }
-            return { error: "I need velocity. Example: 'mach number at 250 m/s'" };
+            return { error: "I need velocity. Try: 'mach number at 250 m/s'" };
         }
 
         // ====================================================================
         // STANDARD ATMOSPHERE
         // ====================================================================
         if (isAtmosphere) {
-            const altitude = unitNum("m|km|mi|ft") ?? num(["altitude", "height"]);
+            const altitude = get(["altitude", "height", "height above earth", "above earth"], "m|km|mi|ft");
 
             if (altitude !== null) {
                 let h = altitude;
-                if (h < 100) h = h * 1000; // assume km if small number
+                if (h < 100) h = h * 1000;
                 if (h < 0) return { error: "Altitude cannot be negative." };
 
-                // Simplified International Standard Atmosphere (troposphere + stratosphere, 0-20 km)
                 let T, P, rho, a;
                 if (h <= 11000) {
-                    // Troposphere: lapse rate -6.5 K/km
                     T = 288.15 - 0.0065 * h;
                     P = 101325 * Math.pow(T / 288.15, 5.25588);
                     rho = P / (287.05 * T);
                 } else if (h <= 20000) {
-                    // Lower stratosphere: isothermal at 216.65 K
                     T = 216.65;
                     P = 22632.06 * Math.exp(-9.80665 * (h - 11000) / (287.05 * T));
                     rho = P / (287.05 * T);
@@ -1862,7 +1884,7 @@ class SuperSolverEngine {
                     return { error: "This simplified atmosphere model covers 0\u201320 km. For higher altitudes, specify a model." };
                 }
 
-                a = Math.sqrt(1.4 * 287.05 * T); // speed of sound
+                a = Math.sqrt(1.4 * 287.05 * T);
 
                 return {
                     success: true,
@@ -1902,7 +1924,7 @@ class SuperSolverEngine {
                     assumptions: ["International Standard Atmosphere", "Dry air", "No wind or weather effects"]
                 };
             }
-            return { error: "I need altitude. Example: 'standard atmosphere at 10 km altitude'" };
+            return { error: "I need altitude. Try: 'standard atmosphere at 10 km altitude'" };
         }
 
         return null;
