@@ -1493,6 +1493,421 @@ class SuperSolverEngine {
         };
     }
 
+    // ------------------------------------------------------------ aerospace
+
+    solveAerospace(input) {
+        const text = String(input).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+
+        // ---- Constants ----
+        const G = 6.67430e-11;        // m^3 kg^-1 s^-2
+        const M_EARTH = 5.972e24;     // kg
+        const R_EARTH = 6371000;      // m
+        const G0 = 9.80665;           // m/s^2 (standard gravity)
+        const MU_EARTH = G * M_EARTH; // m^3/s^2
+
+        const isRocket = /\brocket\b|delta.v|\u0394v|delta v|specific impulse|isp|exhaust velocity|mass ratio|propellant/.test(text);
+        const isOrbital = /\borbit\b|orbital|satellite|circular orbit/.test(text);
+        const isEscape = /\bescape\b/.test(text);
+        const isLift = /\blift\b/.test(text);
+        const isDrag = /\bdrag\b/.test(text);
+        const isMach = /\bmach\b/.test(text);
+        const isAtmosphere = /\batmosphere\b|standard atmosphere|density at altitude|pressure at altitude/.test(text);
+
+        if (!isRocket && !isOrbital && !isEscape && !isLift && !isDrag && !isMach && !isAtmosphere) return null;
+
+        // ---- Helper: extract named numbers ----
+        const num = (labels) => this.namedValue(text, labels);
+        const unitNum = (pattern) => this.unitValue(text, pattern);
+
+        // ====================================================================
+        // ROCKET EQUATION (Tsiolkovsky)
+        // ====================================================================
+        if (isRocket) {
+            const m0 = unitNum("kg|tonnes?|tons?|lb") ?? num(["initial mass", "wet mass", "starting mass", "m0"]);
+            const mf = unitNum("kg|tonnes?|tons?|lb") ?? num(["final mass", "dry mass", "ending mass", "mf"]);
+            const ve = unitNum("m\\/s") ?? num(["exhaust velocity", "ve"]);
+            const isp = num(["specific impulse", "isp"]) ?? (ve !== null ? ve / G0 : null);
+
+            if (m0 !== null && mf !== null && (ve !== null || isp !== null)) {
+                const veFinal = ve !== null ? ve : isp * G0;
+                const ratio = m0 / mf;
+                const dv = veFinal * Math.log(ratio);
+
+                if (!Number.isFinite(dv) || dv < 0) {
+                    return { error: "Delta-v is not finite. Check that initial mass is greater than final mass." };
+                }
+
+                // Sensitivity analysis
+                const dvMinus10 = veFinal * Math.log(m0 / (mf * 1.1));
+                const dvPlus10 = veFinal * Math.log(m0 / (mf * 0.9));
+                const dvIspMinus10 = (isp * G0 * 0.9) * Math.log(ratio);
+                const dvIspPlus10 = (isp * G0 * 1.1) * Math.log(ratio);
+
+                return {
+                    success: true,
+                    domain: "Aerospace Engineering",
+                    subdomain: "Rocket Propulsion",
+                    result: this.fmt(dv, 4),
+                    units: "m/s",
+                    theory: "The Tsiolkovsky rocket equation describes how much velocity change a rocket can achieve by expelling propellant. It depends only on exhaust velocity and the ratio of initial to final mass — not on burn time or thrust.",
+                    steps: [
+                        {
+                            number: 1,
+                            title: "Identify the Principle",
+                            explanation: "The rocket equation relates velocity change to exhaust velocity and propellant mass fraction.",
+                            formula: "\u0394v = v_e \u00D7 ln(m_0 / m_f)"
+                        },
+                        {
+                            number: 2,
+                            title: "Compute Mass Ratio",
+                            explanation: "Divide initial (wet) mass by final (dry) mass.",
+                            formula: `m_0 / m_f = ${this.fmt(m0)} / ${this.fmt(mf)} = ${this.fmt(ratio, 4)}`
+                        },
+                        {
+                            number: 3,
+                            title: "Compute Delta-v",
+                            explanation: `Multiply exhaust velocity by the natural logarithm of the mass ratio.`,
+                            formula: `\u0394v = ${this.fmt(veFinal, 4)} \u00D7 ln(${this.fmt(ratio, 4)}) = ${this.fmt(dv, 4)} m/s`
+                        },
+                        {
+                            number: 4,
+                            title: "Sensitivity \u2014 How Changes Affect Your Rocket",
+                            explanation: "Small changes in mass or ISP meaningfully change delta-v, which determines whether your rocket reaches orbit.",
+                            formula: `ISP -10%: dv ~ ${this.fmt(dvIspMinus10, 4)} m/s (-${this.fmt(100 * (1 - dvIspMinus10 / dv), 1)}%)  |  ISP +10%: dv ~ ${this.fmt(dvIspPlus10, 4)} m/s (+${this.fmt(100 * (dvIspPlus10 / dv - 1), 1)}%)`
+                        }
+                    ],
+                    assumptions: ["Impulsive burn (instantaneous)", "No gravity or drag losses", "Constant exhaust velocity", "Vacuum conditions"]
+                };
+            }
+            return { error: "I need initial mass, final mass, and either exhaust velocity or specific impulse. Example: 'rocket delta-v with initial mass 500000 kg, final mass 100000 kg, specific impulse 300 s'" };
+        }
+
+        // ====================================================================
+        // ORBITAL VELOCITY
+        // ====================================================================
+        if (isOrbital) {
+            const altitude = unitNum("m|km|mi") ?? num(["altitude", "height above earth", "orbital altitude"]);
+            const radius = unitNum("m|km|mi") ?? num(["orbital radius", "distance from center", "r"]);
+
+            let r;
+            if (radius !== null) {
+                r = radius;
+            } else if (altitude !== null) {
+                const altM = altitude < 10000 ? altitude * 1000 : altitude; // assume km if < 10000
+                r = R_EARTH + altM;
+            } else {
+                return { error: "I need orbital radius or altitude above Earth. Example: 'orbital velocity at 400 km altitude'" };
+            }
+
+            if (!(r > 0)) return { error: "Radius must be greater than zero." };
+
+            const v = Math.sqrt(MU_EARTH / r);
+            const period = 2 * Math.PI * Math.sqrt(Math.pow(r, 3) / MU_EARTH);
+            const vEscape = Math.sqrt(2 * MU_EARTH / r);
+
+            return {
+                success: true,
+                domain: "Aerospace Engineering",
+                subdomain: "Orbital Mechanics",
+                result: this.fmt(v, 4),
+                units: "m/s",
+                theory: "A circular orbit balances gravity pulling inward with centrifugal tendency outward. The required speed depends only on the central body's mass and your distance from its center.",
+                steps: [
+                    {
+                        number: 1,
+                        title: "Identify the Principle",
+                        explanation: "Circular orbital velocity comes from equating gravitational force to centripetal force.",
+                        formula: "v = \u221A(GM / r)"
+                    },
+                    {
+                        number: 2,
+                        title: "Compute Orbital Radius",
+                        explanation: `Radius = Earth radius + altitude. Earth radius = ${this.fmt(R_EARTH / 1000, 2)} km.`,
+                        formula: `r = ${this.fmt(R_EARTH / 1000, 2)} km + ${this.fmt((r - R_EARTH) / 1000, 2)} km = ${this.fmt(r / 1000, 2)} km`
+                    },
+                    {
+                        number: 3,
+                        title: "Compute Orbital Velocity",
+                        explanation: "Substitute into the circular orbit formula.",
+                        formula: `v = \u221A(${this.fmt(MU_EARTH, 4)} / ${this.fmt(r / 1000, 2)}) = ${this.fmt(v, 4)} m/s`
+                    },
+                    {
+                        number: 4,
+                        title: "Sensitivity \u2014 How Altitude Changes Your Orbit",
+                        explanation: "Higher altitude means slower orbital speed but longer period. Compare at 200 km vs 800 km:",
+                        formula: `At 200 km: v ~ ${this.fmt(Math.sqrt(MU_EARTH / (R_EARTH + 200000)), 4)} m/s  |  At 800 km: v ~ ${this.fmt(Math.sqrt(MU_EARTH / (R_EARTH + 800000)), 4)} m/s`
+                    }
+                ],
+                    assumptions: ["Circular orbit", "Earth as central body", "No atmospheric drag", "Two-body problem"]
+                };
+            }
+
+        // ====================================================================
+        // ESCAPE VELOCITY
+        // ====================================================================
+        if (isEscape) {
+            const altitude = unitNum("m|km|mi") ?? num(["altitude", "height above earth"]);
+            const radius = unitNum("m|km|mi") ?? num(["orbital radius", "distance from center", "r"]);
+
+            let r;
+            if (radius !== null) {
+                r = radius;
+            } else if (altitude !== null) {
+                const altM = altitude < 10000 ? altitude * 1000 : altitude;
+                r = R_EARTH + altM;
+            } else {
+                return { error: "I need altitude above Earth or distance from center. Example: 'escape velocity from Earth surface'" };
+            }
+
+            if (!(r > 0)) return { error: "Radius must be greater than zero." };
+
+            const ve = Math.sqrt(2 * MU_EARTH / r);
+
+            return {
+                success: true,
+                domain: "Aerospace Engineering",
+                subdomain: "Orbital Mechanics",
+                result: this.fmt(ve, 4),
+                units: "m/s",
+                theory: "Escape velocity is the speed needed to break free from a planet's gravitational pull without further propulsion. At this speed, kinetic energy exactly equals gravitational potential energy.",
+                steps: [
+                    {
+                        number: 1,
+                        title: "Identify the Principle",
+                        explanation: "Set kinetic energy equal to gravitational potential energy: \u00BDmv\u00B2 = GMm/r",
+                        formula: "v_e = \u221A(2GM / r)"
+                    },
+                    {
+                        number: 2,
+                        title: "Compute",
+                        explanation: "Substitute Earth's mass and radius.",
+                        formula: `v_e = \u221A(2 \u00D7 ${this.fmt(MU_EARTH, 4)} / ${this.fmt(r / 1000, 2)}) = ${this.fmt(ve, 4)} m/s`
+                    },
+                    {
+                        number: 3,
+                        title: "Context",
+                        explanation: "Earth's surface escape velocity is about 11.2 km/s. Low Earth orbit is about 7.8 km/s \u2014 you need roughly 41% more speed to leave Earth entirely than to orbit it.",
+                        formula: "v_e (surface) \u2248 11,186 m/s  |  v_orbit (LEO) \u2248 7,800 m/s"
+                    }
+                ],
+                    assumptions: ["No atmospheric drag", "No planetary rotation", "Two-body problem", "No other celestial bodies"]
+                };
+            }
+
+        // ====================================================================
+        // LIFT FORCE
+        // ====================================================================
+        if (isLift) {
+            const rho = this.namedValue(text, ["density", "air density"]) ?? 1.225;
+            const v = unitNum("m\\/s|km\\/h|mph") ?? num(["velocity", "airspeed", "speed"]);
+            const s = unitNum("m2|mA�|ft2|ftA�") ?? num(["wing area", "surface area", "area s"]);
+            const cl = num(["lift coefficient", "cl", "c_l"]);
+
+            if (v !== null && s !== null && cl !== null) {
+                const vMps = v; // assume m/s if no unit, or handle km/h
+                const lift = 0.5 * rho * vMps * vMps * s * cl;
+
+                return {
+                    success: true,
+                    domain: "Aerospace Engineering",
+                    subdomain: "Aerodynamics",
+                    result: this.fmt(lift, 4),
+                    units: "N",
+                    theory: "Lift is generated by pressure difference across a wing. It scales with dynamic pressure (\u00BD\u03C1v\u00B2), wing area, and lift coefficient.",
+                    steps: [
+                        {
+                            number: 1,
+                            title: "Identify the Principle",
+                            explanation: "Lift equals dynamic pressure times wing area times lift coefficient.",
+                            formula: "L = \u00BD \u03C1 v\u00B2 S C_L"
+                        },
+                        {
+                            number: 2,
+                            title: "Substitute",
+                            explanation: "Dynamic pressure = \u00BD \u03C1 v\u00B2.",
+                            formula: `q = \u00BD \u00D7 ${this.fmt(rho)} \u00D7 ${this.fmt(vMps)}\u00B2 = ${this.fmt(0.5 * rho * vMps * vMps, 4)} Pa`
+                        },
+                        {
+                            number: 3,
+                            title: "Final Answer",
+                            explanation: "Multiply by wing area and lift coefficient.",
+                            formula: `L = ${this.fmt(0.5 * rho * vMps * vMps * s, 4)} \u00D7 ${this.fmt(cl)} = ${this.fmt(lift, 4)} N`
+                        }
+                    ],
+                    assumptions: ["Incompressible flow", "Constant lift coefficient", "Steady level flight"]
+                };
+            }
+            return { error: "I need velocity, wing area, and lift coefficient. Example: 'lift force with velocity 70 m/s, wing area 20 m\u00B2, lift coefficient 0.5'" };
+        }
+
+        // ====================================================================
+        // DRAG FORCE
+        // ====================================================================
+        if (isDrag) {
+            const rho = this.namedValue(text, ["density", "air density"]) ?? 1.225;
+            const v = unitNum("m\\/s|km\\/h|mph") ?? num(["velocity", "airspeed", "speed"]);
+            const s = unitNum("m2|mA�|ft2|ftA�") ?? num(["reference area", "frontal area", "area s"]);
+            const cd = num(["drag coefficient", "cd", "c_d"]);
+
+            if (v !== null && s !== null && cd !== null) {
+                const vMps = v;
+                const drag = 0.5 * rho * vMps * vMps * s * cd;
+
+                return {
+                    success: true,
+                    domain: "Aerospace Engineering",
+                    subdomain: "Aerodynamics",
+                    result: this.fmt(drag, 4),
+                    units: "N",
+                    theory: "Drag opposes motion through a fluid. It scales with dynamic pressure, reference area, and drag coefficient \u2014 streamlining reduces C_d dramatically.",
+                    steps: [
+                        {
+                            number: 1,
+                            title: "Identify the Principle",
+                            explanation: "Drag equals dynamic pressure times reference area times drag coefficient.",
+                            formula: "D = \u00BD \u03C1 v\u00B2 S C_D"
+                        },
+                        {
+                            number: 2,
+                            title: "Substitute",
+                            explanation: "Dynamic pressure = \u00BD \u03C1 v\u00B2.",
+                            formula: `q = \u00BD \u00D7 ${this.fmt(rho)} \u00D7 ${this.fmt(vMps)}\u00B2 = ${this.fmt(0.5 * rho * vMps * vMps, 4)} Pa`
+                        },
+                        {
+                            number: 3,
+                            title: "Final Answer",
+                            explanation: "Multiply by reference area and drag coefficient.",
+                            formula: `D = ${this.fmt(0.5 * rho * vMps * vMps * s, 4)} \u00D7 ${this.fmt(cd)} = ${this.fmt(drag, 4)} N`
+                        }
+                    ],
+                    assumptions: ["Incompressible flow", "Constant drag coefficient", "Steady flight"]
+                };
+            }
+            return { error: "I need velocity, reference area, and drag coefficient. Example: 'drag force with velocity 250 m/s, reference area 15 m\u00B2, drag coefficient 0.03'" };
+        }
+
+        // ====================================================================
+        // MACH NUMBER
+        // ====================================================================
+        if (isMach) {
+            const v = unitNum("m\\/s|km\\/h|mph|knots?") ?? num(["velocity", "airspeed", "speed"]);
+            const a = num(["speed of sound", "mach speed", "a"]) ?? 343; // m/s at sea level, 15°C
+
+            if (v !== null) {
+                const vMps = v;
+                const mach = vMps / a;
+
+                let regime = "subsonic";
+                if (mach > 5) regime = "hypersonic";
+                else if (mach > 1) regime = "supersonic";
+                else if (mach > 0.8) regime = "transonic";
+
+                return {
+                    success: true,
+                    domain: "Aerospace Engineering",
+                    subdomain: "Compressible Flow",
+                    result: this.fmt(mach, 3),
+                    units: "Mach",
+                    theory: "Mach number is the ratio of object speed to the local speed of sound. It determines compressibility effects \u2014 shock waves appear near Mach 1.",
+                    steps: [
+                        {
+                            number: 1,
+                            title: "Identify the Principle",
+                            explanation: "Mach number = object speed / speed of sound.",
+                            formula: "M = v / a"
+                        },
+                        {
+                            number: 2,
+                            title: "Substitute",
+                            explanation: `Speed of sound at sea level (15\u00B0C) \u2248 343 m/s.`,
+                            formula: `M = ${this.fmt(vMps)} / ${this.fmt(a)} = ${this.fmt(mach, 3)}`
+                        },
+                        {
+                            number: 3,
+                            title: "Regime",
+                            explanation: `Mach ${this.fmt(mach, 2)} is in the ${regime} regime.`,
+                            formula: `Regime: ${regime} (M < 1: subsonic, M \u2248 1: transonic, 1 < M < 5: supersonic, M > 5: hypersonic)`
+                        }
+                    ],
+                    assumptions: ["Constant speed of sound", "Standard atmosphere"]
+                };
+            }
+            return { error: "I need velocity. Example: 'mach number at 250 m/s'" };
+        }
+
+        // ====================================================================
+        // STANDARD ATMOSPHERE
+        // ====================================================================
+        if (isAtmosphere) {
+            const altitude = unitNum("m|km|mi|ft") ?? num(["altitude", "height"]);
+
+            if (altitude !== null) {
+                let h = altitude;
+                if (h < 100) h = h * 1000; // assume km if small number
+                if (h < 0) return { error: "Altitude cannot be negative." };
+
+                // Simplified International Standard Atmosphere (troposphere + stratosphere, 0-20 km)
+                let T, P, rho, a;
+                if (h <= 11000) {
+                    // Troposphere: lapse rate -6.5 K/km
+                    T = 288.15 - 0.0065 * h;
+                    P = 101325 * Math.pow(T / 288.15, 5.25588);
+                    rho = P / (287.05 * T);
+                } else if (h <= 20000) {
+                    // Lower stratosphere: isothermal at 216.65 K
+                    T = 216.65;
+                    P = 22632.06 * Math.exp(-9.80665 * (h - 11000) / (287.05 * T));
+                    rho = P / (287.05 * T);
+                } else {
+                    return { error: "This simplified atmosphere model covers 0\u201320 km. For higher altitudes, specify a model." };
+                }
+
+                a = Math.sqrt(1.4 * 287.05 * T); // speed of sound
+
+                return {
+                    success: true,
+                    domain: "Aerospace Engineering",
+                    subdomain: "Atmosphere",
+                    result: this.fmt(rho, 6),
+                    units: "kg/m\u00B3",
+                    theory: "The International Standard Atmosphere models how temperature, pressure, and density change with altitude. These properties determine engine performance, lift, drag, and speed of sound.",
+                    steps: [
+                        {
+                            number: 1,
+                            title: "Identify Altitude Layer",
+                            explanation: `Altitude ${this.fmt(h / 1000, 2)} km is in the ${h <= 11000 ? 'troposphere' : 'lower stratosphere'}.`,
+                            formula: `h = ${this.fmt(h)} m`
+                        },
+                        {
+                            number: 2,
+                            title: "Temperature",
+                            explanation: h <= 11000
+                                ? "Temperature drops 6.5 K per km in the troposphere."
+                                : "Temperature is constant at 216.65 K in the lower stratosphere.",
+                            formula: `T = ${this.fmt(T, 2)} K`
+                        },
+                        {
+                            number: 3,
+                            title: "Pressure & Density",
+                            explanation: "Pressure and density are computed from the ideal gas law and hydrostatic equation.",
+                            formula: `P = ${this.fmt(P / 1000, 2)} kPa,  \u03C1 = ${this.fmt(rho, 6)} kg/m\u00B3`
+                        },
+                        {
+                            number: 4,
+                            title: "Speed of Sound",
+                            explanation: "Speed of sound depends only on temperature: a = \u221A(1.4 \u00D7 R \u00D7 T).",
+                            formula: `a = ${this.fmt(a, 2)} m/s`
+                        }
+                    ],
+                    assumptions: ["International Standard Atmosphere", "Dry air", "No wind or weather effects"]
+                };
+            }
+            return { error: "I need altitude. Example: 'standard atmosphere at 10 km altitude'" };
+        }
+
+        return null;
+    }
+
     solveSingleStep(input, numbers) {
         const query = input.toLowerCase();
 
@@ -1530,6 +1945,9 @@ class SuperSolverEngine {
 
         const motion = this.solveProjectile(input);
         if (motion) return motion;
+
+        const aerospace = this.solveAerospace(input);
+        if (aerospace) return aerospace;
 
         for (const domain in this.kb) {
             for (const subDomain in this.kb[domain]) {
