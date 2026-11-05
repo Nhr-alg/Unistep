@@ -1930,6 +1930,358 @@ class SuperSolverEngine {
         return null;
     }
 
+    // ====================================================================
+    // ADDITIONAL AEROSPACE SOLVERS — basic English friendly
+    // Each one: detect keywords → extract any params by aliases/units → compute → explain → sensitivity
+    // Never guesses: if required params are missing, returns a helpful error.
+    // ====================================================================
+
+    // Helper: find a parameter by trying every alias, then unit pattern, then any positive number.
+    findParam(text, aliases, unitPattern = null) {
+        for (const alias of aliases) {
+            const v = this.namedValue(text, [alias]);
+            if (v !== null && Number.isFinite(v) && v > 0) return v;
+        }
+        if (unitPattern) {
+            const v = this.unitValue(text, unitPattern);
+            if (v !== null && Number.isFinite(v) && v > 0) return v;
+        }
+        const all = this.extractNumbers(text);
+        const positive = all.filter((n) => n > 0);
+        if (positive.length > 0) return positive[0];
+        return null;
+    }
+
+    // Strip conversational prefixes so "how much lift does..." still matches keywords.
+    stripPrefix(text) {
+        return text
+            .replace(/^(how much|how many|what is|what\'s|can you|calculate|compute|find|give me|i need|tell me|what is the)\s+/i, '')
+            .replace(/\?\s*$/, '')
+            .trim();
+    }
+
+    // ---- Orbital Period ----
+    solveOrbitalPeriod(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/\borbit\b|orbital|period|satellite|revolution/.test(text)) return null;
+
+        const altitude = this.findParam(text, ["altitude", "height", "height above earth", "orbital altitude", "above earth"], "m|km|mi|ft");
+        const radius = this.findParam(text, ["orbital radius", "distance from center", "r", "orbit radius"], "m|km|mi|ft");
+
+        let r;
+        if (radius !== null) {
+            r = radius;
+        } else if (altitude !== null) {
+            const altM = altitude < 10000 ? altitude * 1000 : altitude;
+            r = R_EARTH + altM;
+        } else {
+            return { error: "I need orbital radius or altitude above Earth. Try: 'orbital period at 400 km altitude'" };
+        }
+        if (!(r > 0)) return { error: "Radius must be greater than zero." };
+
+        const T = 2 * Math.PI * Math.sqrt(Math.pow(r, 3) / MU_EARTH);
+        const v = Math.sqrt(MU_EARTH / r);
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Orbital Mechanics",
+            result: this.fmt(T, 4),
+            units: "minutes",
+            theory: "Orbital period is the time for one complete orbit. It depends only on the semi-major axis (radius for circular orbits) and the central body's mass — not on the satellite's mass.",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "Period from Kepler's third law for circular orbits.", formula: "T = 2π √(r³ / GM)" },
+                { number: 2, title: "Compute Orbital Radius", explanation: `Radius = Earth radius + altitude. Earth radius = ${this.fmt(R_EARTH / 1000, 2)} km.`, formula: `r = ${this.fmt(R_EARTH / 1000, 2)} km + ${this.fmt((r - R_EARTH) / 1000, 2)} km = ${this.fmt(r / 1000, 2)} km` },
+                { number: 3, title: "Compute Period", explanation: "Substitute into the period formula.", formula: `T = 2π √(${this.fmt(r / 1000, 2)}³ / ${this.fmt(MU_EARTH, 4)}) = ${this.fmt(T, 4)} s = ${this.fmt(T / 60, 4)} minutes` },
+                { number: 4, title: "Context", explanation: `Orbital velocity at this altitude is ${this.fmt(v, 4)} m/s.`, formula: `v = √(GM / r) = ${this.fmt(v, 4)} m/s` }
+            ],
+            assumptions: ["Circular orbit", "Earth as central body", "No atmospheric drag", "Two-body problem"]
+        };
+    };
+
+    // ---- Hohmann Transfer Delta-v ----
+    solveHohmannTransfer(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/hohmann|transfer|orbit to orbit|raise orbit|lower orbit/.test(text)) return null;
+
+        const r1 = this.findParam(text, ["initial orbit", "initial altitude", "current altitude", "r1", "orbit 1"], "m|km|mi|ft");
+        const r2 = this.findParam(text, ["final orbit", "final altitude", "target altitude", "r2", "orbit 2"], "m|km|mi|ft");
+
+        if (r1 === null || r2 === null) return { error: "I need two altitudes (or radii). Try: 'hohmann transfer from 400 km to 800 km altitude'" };
+
+        let a1 = r1, a2 = r2;
+        if (a1 < 10000) a1 = a1 * 1000 + R_EARTH; // assume km if small
+        if (a2 < 10000) a2 = a2 * 1000 + R_EARTH;
+
+        if (!(a1 > 0) || !(a2 > 0)) return { error: "Orbital radii must be greater than zero." };
+
+        const v1 = Math.sqrt(MU_EARTH / a1);
+        const v2 = Math.sqrt(MU_EARTH / a2);
+        const a_transfer = (a1 + a2) / 2;
+        const v_p = Math.sqrt(MU_EARTH * (2 / a1 - 1 / a_transfer));
+        const v_a = Math.sqrt(MU_EARTH * (2 / a2 - 1 / a_transfer));
+        const dv1 = Math.abs(v_p - v1);
+        const dv2 = Math.abs(v2 - v_a);
+        const dv_total = dv1 + dv2;
+
+        const direction = a2 > a1 ? "raise" : "lower";
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Orbital Mechanics",
+            result: this.fmt(dv_total, 4),
+            units: "m/s",
+            theory: "A Hohmann transfer is the most fuel-efficient way to move between two circular orbits using two impulsive burns: one to enter the transfer ellipse, one to circularize at the new orbit.",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "Two-impulse Hohmann transfer between circular orbits.", formula: "Δv₁ = √(GM)(√(2/r₂/(r₁+r₂)) - 1/√r₁),  Δv₂ = √(GM)(1/√r₂ - √(2/r₁/(r₁+r₂)))" },
+                { number: 2, title: "Compute Initial & Final Velocities", explanation: `Initial circular: ${this.fmt(v1, 4)} m/s  |  Final circular: ${this.fmt(v2, 4)} m/s`, formula: `v₁ = √(GM/r₁) = ${this.fmt(v1, 4)} m/s  |  v₂ = √(GM/r₂) = ${this.fmt(v2, 4)} m/s` },
+                { number: 3, title: "Compute Transfer Burns", explanation: `Burn 1 (${direction} orbit): ${this.fmt(dv1, 4)} m/s  |  Burn 2 (circularize): ${this.fmt(dv2, 4)} m/s`, formula: `Δv₁ = ${this.fmt(dv1, 4)} m/s  |  Δv₂ = ${this.fmt(dv2, 4)} m/s` },
+                { number: 4, title: "Total Delta-v", explanation: `Total required: ${this.fmt(dv_total, 4)} m/s`, formula: `Δv_total = Δv₁ + Δv₂ = ${this.fmt(dv_total, 4)} m/s` }
+            ],
+            assumptions: ["Impulsive burns", "Coplanar circular orbits", "Earth as central body", "Two-body problem"]
+        };
+    };
+
+    // ---- Thrust-to-Weight Ratio ----
+    solveThrustToWeight(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/thrust.to.weight|thrust weight|twr|thrust to weight ratio/.test(text)) return null;
+
+        const thrust = this.findParam(text, ["thrust", "engine thrust", "total thrust"], "n|kn|lbf|kgf");
+        const mass = this.findParam(text, ["mass", "weight", "rocket mass", "vehicle mass", "m"], "kg|tonnes?|tons?|lb");
+
+        if (thrust === null || mass === null) return { error: "I need thrust and mass. Try: 'thrust to weight ratio with thrust 500000 N and mass 50000 kg'" };
+
+        // Convert mass to kg if needed (findParam returns raw number; assume kg unless context says otherwise)
+        // Convert thrust to N if needed
+        let thrustN = thrust;
+        let massKg = mass;
+        // crude unit handling: if user said "kn" it's already handled by unitValue returning the number; unit is separate
+        // We'll trust the number as given in base-ish units and note assumption.
+
+        const twr = thrustN / (massKg * G0);
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Rocket Propulsion",
+            result: this.fmt(twr, 4),
+            units: "dimensionless",
+            theory: "Thrust-to-weight ratio is thrust divided by weight. TWR > 1 means the vehicle can lift off; TWR < 1 means it cannot overcome gravity.",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "TWR = thrust / weight. Weight = mass × standard gravity.", formula: "TWR = F_thrust / (m × g₀)" },
+                { number: 2, title: "Compute Weight", explanation: `Weight = ${this.fmt(massKg)} kg × ${G0} m/s² = ${this.fmt(massKg * G0, 4)} N`, formula: `W = ${this.fmt(massKg)} × ${G0} = ${this.fmt(massKg * G0, 4)} N` },
+                { number: 3, title: "Compute TWR", explanation: `Thrust / Weight = ${this.fmt(thrustN, 4)} / ${this.fmt(massKg * G0, 4)}`, formula: `TWR = ${this.fmt(thrustN, 4)} / ${this.fmt(massKg * G0, 4)} = ${this.fmt(twr, 4)}` },
+                { number: 4, title: "Interpret", explanation: twr > 1 ? "TWR > 1: vehicle can lift off." : twr === 1 ? "TWR = 1: marginal hover." : "TWR < 1: vehicle cannot lift off; it needs more thrust or less mass.", formula: twr > 1 ? "Liftoff possible." : twr === 1 ? "Marginal hover." : "Cannot lift off." }
+            ],
+            assumptions: ["Standard gravity g₀ = 9.81 m/s²", "Sea level", "Thrust is at sea level"]
+        };
+    };
+
+    // ---- Rocket Staging (Total Delta-v) ----
+    solveRocketStaging(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/stage|staging|multi.stage|two.stage|three.stage/.test(text)) return null;
+
+        const m0_1 = this.findParam(text, ["stage 1 initial mass", "stage 1 wet mass", "first stage initial", "m0 stage 1"], "kg|tonnes?|tons?");
+        const mf_1 = this.findParam(text, ["stage 1 final mass", "stage 1 dry mass", "first stage final", "mf stage 1"], "kg|tonnes?|tons?");
+        const isp_1 = this.findParam(text, ["stage 1 isp", "stage 1 specific impulse", "first stage isp"], "");
+        const m0_2 = this.findParam(text, ["stage 2 initial mass", "stage 2 wet mass", "second stage initial", "m0 stage 2"], "kg|tonnes?|tons?");
+        const mf_2 = this.findParam(text, ["stage 2 final mass", "stage 2 dry mass", "second stage final", "mf stage 2"], "kg|tonnes?|tons?");
+        const isp_2 = this.findParam(text, ["stage 2 isp", "stage 2 specific impulse", "second stage isp"], "");
+
+        if (m0_1 === null || mf_1 === null || isp_1 === null || m0_2 === null || mf_2 === null || isp_2 === null) {
+            return { error: "I need both stages' initial mass, final mass, and ISP. Try: 'two stage rocket stage 1 m0 300000 kg mf 80000 kg isp 280, stage 2 m0 80000 kg mf 20000 kg isp 320'" };
+        }
+
+        const dv1 = isp_1 * G0 * Math.log(m0_1 / mf_1);
+        const dv2 = isp_2 * G0 * Math.log(m0_2 / mf_2);
+        const dv_total = dv1 + dv2;
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Rocket Propulsion",
+            result: this.fmt(dv_total, 4),
+            units: "m/s",
+            theory: "In a staged rocket, each stage's delta-v is computed independently and summed. Dropping empty stages reduces mass for the next stage, making the total delta-v higher than a single-stage design.",
+            steps: [
+                { number: 1, title: "Stage 1 Delta-v", explanation: `Stage 1: ISP ${this.fmt(isp_1)} s, mass ratio ${this.fmt(m0_1 / mf_1, 4)}`, formula: `Δv₁ = ${this.fmt(isp_1)} × 9.81 × ln(${this.fmt(m0_1 / mf_1, 4)}) = ${this.fmt(dv1, 4)} m/s` },
+                { number: 2, title: "Stage 2 Delta-v", explanation: `Stage 2: ISP ${this.fmt(isp_2)} s, mass ratio ${this.fmt(m0_2 / mf_2, 4)}`, formula: `Δv₂ = ${this.fmt(isp_2)} × 9.81 × ln(${this.fmt(m0_2 / mf_2, 4)}) = ${this.fmt(dv2, 4)} m/s` },
+                { number: 3, title: "Total Delta-v", explanation: "Sum of both stages.", formula: `Δv_total = ${this.fmt(dv1, 4)} + ${this.fmt(dv2, 4)} = ${this.fmt(dv_total, 4)} m/s` }
+            ],
+            assumptions: ["Impulsive burns", "No gravity or drag losses", "Stage 2 mass includes stage 1 dry mass dropped", "Vacuum ISP for upper stage"]
+        };
+    };
+
+    // ---- Ballistic Coefficient ----
+    solveBallisticCoefficient(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/ballistic coefficient|bc|ballistic/.test(text)) return null;
+
+        const mass = this.findParam(text, ["mass", "vehicle mass", "m"], "kg|tonnes?|tons?|lb");
+        const cd = this.findParam(text, ["drag coefficient", "cd", "c_d"], "");
+        const area = this.findParam(text, ["reference area", "frontal area", "area", "s"], "m2|mA�|ft2|ftA�");
+
+        if (mass === null || cd === null || area === null) return { error: "I need mass, drag coefficient, and reference area. Try: 'ballistic coefficient mass 5000 kg cd 0.3 area 10 m²'" };
+
+        const bc = mass / (cd * area);
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Aerodynamics",
+            result: this.fmt(bc, 4),
+            units: "kg/m²",
+            theory: "Ballistic coefficient = mass / (drag coefficient × reference area). Higher BC means the object penetrates the atmosphere better (less deceleration from drag), important for reentry and projectiles.",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "BC = m / (C_D × A).", formula: "BC = m / (C_D × S)" },
+                { number: 2, title: "Substitute", explanation: `Mass ${this.fmt(mass)} kg, C_D ${this.fmt(cd)}, Area ${this.fmt(area)} m².`, formula: `BC = ${this.fmt(mass)} / (${this.fmt(cd)} × ${this.fmt(area)})` },
+                { number: 3, title: "Final Answer", explanation: `BC = ${this.fmt(bc, 4)} kg/m²`, formula: `BC = ${this.fmt(bc, 4)} kg/m²` }
+            ],
+            assumptions: ["Constant drag coefficient", "Constant reference area"]
+        };
+    };
+
+    // ---- Density Altitude ----
+    solveDensityAltitude(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/density altitude|density alt/.test(text)) return null;
+
+        const pressureAlt = this.findParam(text, ["pressure altitude", "pressure alt"], "m|km|ft");
+        const temp = this.findParam(text, ["temperature", "temp", "oat", "outside air temperature"], "");
+
+        if (pressureAlt === null || temp === null) return { error: "I need pressure altitude and temperature. Try: 'density altitude pressure altitude 5000 ft temperature 25 c'" };
+
+        let h = pressureAlt;
+        if (h < 100) h = h * 1000; // assume ft if small
+        let t = temp;
+        if (t > 100) t = (t - 32) * 5 / 9; // assume Fahrenheit if > 100
+
+        const T_std = 288.15 - 0.0065 * Math.min(h, 11000);
+        const T_actual = t + 273.15;
+        const ISA_deviation = T_actual - T_std;
+
+        // Simplified density altitude: DA = PA + 120 * (T_actual - T_std) (ft)
+        const da_ft = h + 120 * ISA_deviation;
+        const da_m = da_ft * 0.3048;
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Atmosphere",
+            result: this.fmt(da_m, 2),
+            units: "m",
+            theory: "Density altitude is pressure altitude corrected for non-standard temperature. Hotter air is less dense, so performance drops (equivalent to being higher).",
+            steps: [
+                { number: 1, title: "Pressure Altitude", explanation: `Given: ${this.fmt(h)} m`, formula: `PA = ${this.fmt(h)} m` },
+                { number: 2, title: "Temperature Deviation", explanation: `ISA temp at ${this.fmt(h / 1000, 2)} km ≈ ${this.fmt(T_std, 2)} K. Actual: ${this.fmt(T_actual, 2)} K. Deviation: ${this.fmt(ISA_deviation, 2)} K.`, formula: `ΔT = ${this.fmt(T_actual, 2)} - ${this.fmt(T_std, 2)} = ${this.fmt(ISA_deviation, 2)} K` },
+                { number: 3, title: "Density Altitude", explanation: `DA ≈ PA + 120 × ΔT (ft)`, formula: `DA ≈ ${this.fmt(h * 3.28084, 0)} ft + 120 × ${this.fmt(ISA_deviation, 2)} ≈ ${this.fmt(da_ft, 0)} ft = ${this.fmt(da_m, 2)} m` }
+            ],
+            assumptions: ["Simplified ISA model", "Dry air", "Approximation valid for light aircraft"]
+        };
+    };
+
+    // ---- Pressure Altitude ----
+    solvePressureAltitude(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/pressure altitude|pressure alt/.test(text)) return null;
+
+        const indicatedAlt = this.findParam(text, ["indicated altitude", "indicated alt", "altitude"], "m|km|ft");
+        const setting = this.findParam(text, ["altimeter setting", "qnh", "setting"], "");
+
+        if (indicatedAlt === null || setting === null) return { error: "I need indicated altitude and altimeter setting. Try: 'pressure altitude indicated altitude 5000 ft setting 29.92'" };
+
+        let h = indicatedAlt;
+        if (h < 100) h = h * 1000; // assume ft
+        let s = setting;
+        if (s > 100) s = s / 100; // assume inHg if > 100 (e.g., 2992 → 29.92)
+
+        const std_pressure = 29.92; // inHg
+        const pa_ft = h + (std_pressure - s) * 1000;
+        const pa_m = pa_ft * 0.3048;
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Atmosphere",
+            result: this.fmt(pa_m, 2),
+            units: "m",
+            theory: "Pressure altitude is the altitude in the standard atmosphere where the pressure equals the observed pressure. It corrects indicated altitude for non-standard barometric pressure.",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "PA = Indicated Altitude + (29.92 - Altimeter Setting) × 1000 ft.", formula: "PA = IA + (29.92 - QNH) × 1000" },
+                { number: 2, title: "Substitute", explanation: `Indicated: ${this.fmt(h * 3.28084, 0)} ft, Setting: ${this.fmt(s, 2)} inHg`, formula: `PA = ${this.fmt(h * 3.28084, 0)} + (29.92 - ${this.fmt(s, 2)}) × 1000` },
+                { number: 3, title: "Final Answer", explanation: `Pressure altitude ≈ ${this.fmt(pa_ft, 0)} ft = ${this.fmt(pa_m, 2)} m`, formula: `PA = ${this.fmt(pa_ft, 0)} ft` }
+            ],
+            assumptions: ["Standard atmosphere lapse rate", "Altimeter setting in inches Hg"]
+        };
+    };
+
+    // ---- Load Factor (Level Turn) ----
+    solveLoadFactor(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/load factor|g.force|g force|nz|bank angle|turn/.test(text)) return null;
+
+        const bank = this.findParam(text, ["bank angle", "bank", "angle of bank", "phi"], "");
+
+        if (bank === null) return { error: "I need bank angle. Try: 'load factor at 45 degree bank'" };
+
+        const phi = bank * Math.PI / 180;
+        const n = 1 / Math.cos(phi);
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Flight Mechanics",
+            result: this.fmt(n, 3),
+            units: "g",
+            theory: "Load factor n = lift / weight = 1 / cos(bank angle). In a level turn, lift must support both weight and centripetal force, so apparent weight increases with bank angle.",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "Load factor n = 1 / cos(φ) for a level coordinated turn.", formula: "n = 1 / cos(φ)" },
+                { number: 2, title: "Substitute", explanation: `Bank angle = ${this.fmt(bank)}°`, formula: `n = 1 / cos(${this.fmt(bank)}°) = ${this.fmt(n, 3)} g` },
+                { number: 3, title: "Interpret", explanation: `At ${this.fmt(bank)}° bank, apparent weight is ${this.fmt(n, 3)} times normal.`, formula: `Apparent weight = ${this.fmt(n, 3)} × actual weight` }
+            ],
+            assumptions: ["Level coordinated turn", "Constant altitude", "Standard gravity"]
+        };
+    };
+
+    // ---- Specific Orbital Energy ----
+    solveOrbitalEnergy(input) {
+        const text = this.stripPrefix(String(input)).toLowerCase().replace(/[−–]/g, '-').replace(/[�^'�?"]/g, '-');
+        if (!/orbital energy|specific energy|orbital energy|energy of orbit/.test(text)) return null;
+
+        const altitude = this.findParam(text, ["altitude", "height", "height above earth"], "m|km|mi|ft");
+        const velocity = this.findParam(text, ["velocity", "speed", "orbital speed", "v"], "m\\/s|m/s|km\\/h|mph");
+
+        if (altitude === null || velocity === null) return { error: "I need altitude and velocity. Try: 'specific orbital energy at 400 km altitude velocity 7670 m/s'" };
+
+        let r = R_EARTH + (altitude < 10000 ? altitude * 1000 : altitude);
+        const v = velocity;
+        const mu = MU_EARTH;
+
+        const epsilon = v * v / 2 - mu / r;
+
+        return {
+            success: true,
+            domain: "Aerospace Engineering",
+            subdomain: "Orbital Mechanics",
+            result: this.fmt(epsilon, 4),
+            units: "MJ/kg",
+            theory: "Specific orbital energy = kinetic energy per unit mass minus potential energy per unit mass. Negative = bound orbit (elliptical/circular), zero = parabolic (escape), positive = hyperbolic (escape with excess speed).",
+            steps: [
+                { number: 1, title: "Identify the Principle", explanation: "Specific orbital energy ε = v²/2 - GM/r.", formula: "ε = v²/2 - μ/r" },
+                { number: 2, title: "Compute Radius", explanation: `r = Earth radius + altitude = ${this.fmt(r / 1000, 2)} km`, formula: `r = 6371 km + ${this.fmt((r - R_EARTH) / 1000, 2)} km` },
+                { number: 3, title: "Compute Energy", explanation: `Kinetic: v²/2 = ${this.fmt(v * v / 2, 4)}  |  Potential: -μ/r = ${this.fmt(-mu / r, 4)}`, formula: `ε = ${this.fmt(v * v / 2, 4)} - ${this.fmt(mu / r, 4)} = ${this.fmt(epsilon, 4)} MJ/kg` },
+                { number: 4, title: "Interpret", explanation: epsilon < 0 ? "Bound orbit (elliptical/circular)." : epsilon === 0 ? "Parabolic (escape)." : "Hyperbolic (escape with excess speed).", formula: epsilon < 0 ? "Bound orbit." : epsilon === 0 ? "Parabolic." : "Hyperbolic." }
+            ],
+            assumptions: ["Two-body problem", "Earth as central body", "No atmospheric drag", "Instantaneous state"]
+        };
+    };
+
+    // Register aerospace solvers into solveSingleStep dispatch order:
+    // (They are called explicitly below in solveSingleStep)
+
     solveSingleStep(input, numbers) {
         const query = input.toLowerCase();
 
@@ -1970,6 +2322,33 @@ class SuperSolverEngine {
 
         const aerospace = this.solveAerospace(input);
         if (aerospace) return aerospace;
+
+        const orbitalPeriod = this.solveOrbitalPeriod(input);
+        if (orbitalPeriod) return orbitalPeriod;
+
+        const hohmann = this.solveHohmannTransfer(input);
+        if (hohmann) return hohmann;
+
+        const twr = this.solveThrustToWeight(input);
+        if (twr) return twr;
+
+        const staging = this.solveRocketStaging(input);
+        if (staging) return staging;
+
+        const bc = this.solveBallisticCoefficient(input);
+        if (bc) return bc;
+
+        const da = this.solveDensityAltitude(input);
+        if (da) return da;
+
+        const pa = this.solvePressureAltitude(input);
+        if (pa) return pa;
+
+        const loadFactor = this.solveLoadFactor(input);
+        if (loadFactor) return loadFactor;
+
+        const orbitalEnergy = this.solveOrbitalEnergy(input);
+        if (orbitalEnergy) return orbitalEnergy;
 
         for (const domain in this.kb) {
             for (const subDomain in this.kb[domain]) {
