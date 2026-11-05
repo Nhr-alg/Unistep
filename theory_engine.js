@@ -304,6 +304,61 @@
             conditions: 'Valid for 0\u201320 km in this simplified model. Real atmosphere varies with weather, season, and location.',
             example: 'At 10 km altitude: T \u2248 223 K, P \u2248 26.5 kPa, \u03C1 \u2248 0.413 kg/mA3 \u2014 about one third of sea-level density.',
             check: 'Density drops roughly exponentially with altitude, which is why aircraft cruise high: less drag, better fuel efficiency.'
+        },
+        {
+            id: 'hohmann-transfer', subject: 'Aerospace Engineering', title: 'Hohmann transfer',
+            aliases: ['hohmann transfer', 'orbit transfer', 'transfer orbit', 'raise orbit', 'lower orbit', 'orbital transfer'],
+            summary: 'A Hohmann transfer is the most fuel-efficient way to move between two circular orbits using two engine burns.',
+            intuition: 'To go higher, you fire prograde to enter an elliptical transfer ellipse, then fire again at the high point to circularize. Going lower reverses the burns.',
+            equations: ['Δv₁ = √(GM)(√(2r₂/(r₁+r₂)) - 1/√r₁)', 'Δv₂ = √(GM)(1/√r₂ - √(2r₁/(r₁+r₂)))', 'Δv_total = Δv₁ + Δv₂'],
+            units: ['Δv: m/s', 'r₁, r₂: metres', 'GM: m³/s²'],
+            conditions: 'Assumes impulsive burns, coplanar circular orbits, and Earth (or another single body) as the central mass.',
+            example: 'Transferring from 400 km to 800 km altitude requires roughly 60-80 m/s per burn depending on exact radii.',
+            check: 'A Hohmann transfer takes half an ellipse period to reach the destination orbit.'
+        },
+        {
+            id: 'thrust-to-weight', subject: 'Aerospace Engineering', title: 'Thrust-to-weight ratio',
+            aliases: ['thrust to weight', 'thrust-weight ratio', 'twr', 'liftoff capability'],
+            summary: 'Thrust-to-weight ratio is thrust divided by vehicle weight. It determines whether a rocket can lift off.',
+            intuition: 'If thrust exceeds weight, the rocket accelerates upward. If thrust is less than weight, it stays on the pad no matter how long the engine runs.',
+            equations: ['TWR = F_thrust / (m × g₀)', 'TWR > 1: liftoff possible', 'TWR < 1: cannot lift off'],
+            units: ['TWR: dimensionless', 'F_thrust: newtons (N)', 'm: kilograms (kg)', 'g₀: 9.81 m/s²'],
+            conditions: 'Assumes sea-level standard gravity and thrust measured at sea level.',
+            example: 'A rocket with 1,000,000 N thrust and 80,000 kg mass has TWR = 1,000,000 / (80,000 × 9.81) ≈ 1.27 — it can lift off.',
+            check: 'Most launch vehicles have TWR between 1.2 and 1.5 at liftoff.'
+        },
+        {
+            id: 'ballistic-coefficient', subject: 'Aerospace Engineering', title: 'Ballistic coefficient',
+            aliases: ['ballistic coefficient', 'bc', 'ballistic coef', 'reentry coefficient'],
+            summary: 'Ballistic coefficient = mass / (drag coefficient × reference area). It measures how well an object penetrates the atmosphere.',
+            intuition: 'A high BC object (heavy, small, streamlined) slows less in the atmosphere — important for reentry vehicles and projectiles.',
+            equations: ['BC = m / (C_D × S)'],
+            units: ['BC: kg/m²', 'm: kilograms (kg)', 'C_D: dimensionless', 'S: m²'],
+            conditions: 'Assumes constant drag coefficient and reference area.',
+            example: 'A 5,000 kg vehicle with C_D = 0.3 and area 10 m² has BC = 5,000 / 3 ≈ 1,667 kg/m².',
+            check: 'Higher BC = better atmospheric penetration = less deceleration during reentry.'
+        },
+        {
+            id: 'load-factor', subject: 'Aerospace Engineering', title: 'Load factor in turns',
+            aliases: ['load factor', 'g force', 'g-force', 'bank angle', 'level turn', 'apparent weight'],
+            summary: 'Load factor n = lift / weight = 1 / cos(bank angle). In a level turn, lift must support both weight and centripetal force.',
+            intuition: 'The steeper the bank, the more lift is needed just to stay level, so apparent weight increases. At 60° bank, you feel 2g.',
+            equations: ['n = 1 / cos(φ)', 'n = L / W'],
+            units: ['n: dimensionless (g)', 'φ: degrees'],
+            conditions: 'Assumes a level, coordinated turn at constant altitude.',
+            example: 'At 45° bank, n = 1 / cos(45°) ≈ 1.41 g. At 60° bank, n = 1 / cos(60°) = 2.0 g.',
+            check: 'Load factor and energy share units but are different physical quantities.'
+        },
+        {
+            id: 'specific-orbital-energy', subject: 'Aerospace Engineering', title: 'Specific orbital energy',
+            aliases: ['specific orbital energy', 'orbital energy', 'energy of orbit', 'binding energy'],
+            summary: 'Specific orbital energy = kinetic energy per unit mass minus gravitational potential energy per unit mass.',
+            intuition: 'Negative energy means you are gravitationally bound (elliptical/circular orbit). Zero means escape trajectory. Positive means hyperbolic escape with excess speed.',
+            equations: ['ε = v²/2 - μ/r', 'ε < 0: bound orbit', 'ε = 0: parabolic escape', 'ε > 0: hyperbolic escape'],
+            units: ['ε: MJ/kg', 'v: m/s', 'μ: m³/s²', 'r: metres'],
+            conditions: 'Assumes two-body problem, no atmospheric drag, instantaneous state.',
+            example: 'At LEO (400 km, v ≈ 7,670 m/s), ε ≈ -30 MJ/kg — firmly bound to Earth.',
+            check: 'Escape velocity is when ε = 0, which gives v = √(2μ/r).'
         }
     ];
 
