@@ -115,15 +115,16 @@
         }
 
         // @supabase/supabase-js is loaded via CDN in index.html.
-        // UMD global: window.supabaseClient.createClient(url, key)
-        if (typeof window.supabaseClient === 'undefined' ||
-            typeof window.supabaseClient.createClient !== 'function') {
+        // UMD global: window.supabase.createClient(url, key)
+        const supabase = window.supabase;
+        if (typeof supabase === 'undefined' ||
+            typeof supabase.createClient !== 'function') {
             console.warn('Supabase client library not loaded.');
             return null;
         }
 
         try {
-            return window.supabaseClient.createClient(url, key);
+            return supabase.createClient(url, key);
         } catch (err) {
             console.error('Supabase init failed.', err);
             return null;
